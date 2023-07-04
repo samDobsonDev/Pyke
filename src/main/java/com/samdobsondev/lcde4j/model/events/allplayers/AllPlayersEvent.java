@@ -1,6 +1,7 @@
 package com.samdobsondev.lcde4j.model.events.allplayers;
 
 import com.samdobsondev.lcde4j.model.data.AllGameData;
+import com.samdobsondev.lcde4j.model.data.allplayers.Item;
 import com.samdobsondev.lcde4j.model.data.allplayers.Player;
 import com.samdobsondev.lcde4j.model.data.allplayers.SummonerSpell;
 import com.samdobsondev.lcde4j.model.data.common.Rune;
@@ -16,10 +17,11 @@ public class AllPlayersEvent {
     private String championName;
     private Boolean isBot;
     private Boolean isDead;
-    private String item;
-    private Long itemID;
-    private Long itemPrice;
-    private Long itemSlot;
+    private Item item;
+    private Item oldItem;
+    private Item newItem;
+    private Long oldItemSlot;
+    private Long newItemSlot;
     private Long level;
     private String position;
     private String rawChampionName;

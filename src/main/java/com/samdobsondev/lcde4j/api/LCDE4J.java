@@ -6,6 +6,7 @@ import com.samdobsondev.lcde4j.exception.BaselineResponseException;
 import com.samdobsondev.lcde4j.exception.SSLContextCreationException;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEvent;
+import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEventType;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
 import com.samdobsondev.lcde4j.model.events.announcer.AnnouncerNotificationEvent;
 import com.samdobsondev.lcde4j.model.events.gamedata.GameDataEvent;
@@ -105,8 +106,8 @@ public class LCDE4J
                 } else {
                     AllGameData incomingResponse = apiResponse.getResponseObject();
 
-                    // Slow down a bit as some fields in the first incomingResponse MIGHT be null if we go too quick
-                    Thread.sleep(2);
+                    // TODO: Fix this! Slow down a bit as some fields (activePlayer.getAbilities(getQ)) in the first incomingResponse MIGHT be null if we go too quick
+                    Thread.sleep(10);
 
                     // Process all the events that have occurred in this response
                     processEvents(currentResponse.get(), incomingResponse);
@@ -161,13 +162,12 @@ public class LCDE4J
 
     private void processActivePlayerEvents(List<ActivePlayerEvent> activePlayerEvents) {
         // Rather than printing, we need to fire the activePlayerEvents (replace this with the actual activePlayerEvent handling code)
-        /*
         for (ActivePlayerEvent activePlayerEvent : activePlayerEvents) {
             if (activePlayerEvent.getActivePlayerEventType().equals(ActivePlayerEventType.GOLD_CHANGE)) {
             } else {
                 System.out.println(activePlayerEvent);
             }
-        } */
+        }
     }
 
     private void processAllPlayerEvents(List<AllPlayersEvent> allPlayersEvents) {
