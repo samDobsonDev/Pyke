@@ -7,8 +7,6 @@ import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEventType;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AllPlayersEventDetector
 {
@@ -18,12 +16,8 @@ public class AllPlayersEventDetector
 
         List<AllPlayersEvent> events = new ArrayList<>();
 
+        // This will contain all the expected changes if the LCDE4J library goes down and launches again mid-game
         checkForPlayersJoined(events, current, incoming, incomingAllGameData, eventTime);
-
-        // If current list was empty, we create a new list of empty Player objects of the same size as the incoming list
-        if (current.isEmpty()) {
-            current = Stream.generate(Player::new).limit(incoming.size()).toList();
-        }
 
         // For each Player object in the current list, compare with the corresponding Player in the incoming list
         for (int i = 0; i < current.size(); i++) {
@@ -98,8 +92,6 @@ public class AllPlayersEventDetector
         List<Item> currentItems = currentPlayer.getItems();
         List<Item> incomingItems = incomingPlayer.getItems();
 
-        // TODO: Make sure that we handle the first poll, where currentItems will be null. This way, incomingItems will be bigger still and we can generate the events we need to.
-
         // If the size of the incoming items list is greater, a new item has been bought
         // TODO: Need to handle buying items from components items (also wards), which will take up the same slot rather than a new slot and not trigger an ITEM_BOUGHT event in the current implementation
         if (incomingItems.size() > currentItems.size()) {
@@ -160,7 +152,7 @@ public class AllPlayersEventDetector
 
     private void detectSlotChanges(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, List<Item> currentItems, List<Item> incomingItems) {
 
-        // TODO: Handle when there are more than one item in the List<Item>, as it causes this code to throw constant ITEM_SLOT_CHANGE events
+        // TODO: Amend this method to handle when there are more than one of the same type of item in the List<Item> (such as two Long Swords), as it causes this code to throw constant ITEM_SLOT_CHANGE events
 
         if (containsSameItems(currentItems, incomingItems)) {
             for (Item currentItem : currentItems) {
