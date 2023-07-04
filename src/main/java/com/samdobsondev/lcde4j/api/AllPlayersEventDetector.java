@@ -130,7 +130,7 @@ public class AllPlayersEventDetector
                 Item currentItem = currentItems.get(i);
                 Item incomingItem = incomingItems.get(i);
 
-                // If the item at the same index in both lists is not the same, the item may have transformed, moved slots or been used (herald)
+                // If the item at the same index in both lists is not the same, the item may have transformed or been used (herald)
                 if (!currentItem.equals(incomingItem)) {
                     detectItemTransformation(events, incomingPlayer, incomingAllGameData, eventTime, currentItem, incomingItem);
                     detectHeraldUsage(events, incomingPlayer, incomingAllGameData, eventTime, currentItem, incomingItem);
@@ -152,31 +152,30 @@ public class AllPlayersEventDetector
 
     private void detectSlotChanges(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, List<Item> currentItems, List<Item> incomingItems) {
 
-        // TODO: Amend this method to handle when there are more than one of the same type of item in the List<Item> (such as two Long Swords), as it causes this code to throw constant ITEM_SLOT_CHANGE events
-
         if (containsSameItems(currentItems, incomingItems)) {
-            for (Item currentItem : currentItems) {
-                for (Item incomingItem : incomingItems) {
-                    // If the item is the same but the slot has changed
-                    if (currentItem.getItemID().equals(incomingItem.getItemID()) && !currentItem.getSlot().equals(incomingItem.getSlot())) {
-                        AllPlayersEvent event = new AllPlayersEvent();
-                        event.setAllPlayersEventType(AllPlayersEventType.ITEM_SLOT_CHANGE);
-                        event.setAllPlayersEventTime(eventTime);
-                        event.setAllGameData(incomingAllGameData);
-                        event.setPlayer(incomingPlayer);
-                        event.setChampionName(incomingPlayer.getChampionName());
-                        event.setItem(incomingItem);
-                        event.setOldItemSlot(currentItem.getSlot());
-                        event.setNewItemSlot(incomingItem.getSlot());
-                        event.setSummonerName(incomingPlayer.getSummonerName());
-                        events.add(event);
-                    }
+            for (int i = 0; i < currentItems.size(); i++) {
+                Item currentItem = currentItems.get(i);
+                Item incomingItem = incomingItems.get(i);
+
+                // If the item is the same but the slot has changed
+                if (currentItem.getItemID().equals(incomingItem.getItemID()) && !currentItem.getSlot().equals(incomingItem.getSlot())) {
+                    AllPlayersEvent event = new AllPlayersEvent();
+                    event.setAllPlayersEventType(AllPlayersEventType.ITEM_SLOT_CHANGE);
+                    event.setAllPlayersEventTime(eventTime);
+                    event.setAllGameData(incomingAllGameData);
+                    event.setPlayer(incomingPlayer);
+                    event.setChampionName(incomingPlayer.getChampionName());
+                    event.setItem(incomingItem);
+                    event.setOldItemSlot(currentItem.getSlot());
+                    event.setNewItemSlot(incomingItem.getSlot());
+                    event.setSummonerName(incomingPlayer.getSummonerName());
+                    events.add(event);
                 }
             }
         }
     }
 
-    // Tests to see if two List<Item> contain the same Items regardless of index
+    // Returns if two List<Item> lists contain the same Items regardless of index
     private boolean containsSameItems(List<Item> list1, List<Item> list2) {
         Map<Long, Integer> itemCount = new HashMap<>();
 
