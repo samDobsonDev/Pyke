@@ -1,4 +1,4 @@
-package com.samdobsondev.lcde4j.api;
+package com.samdobsondev.lcde4j.api.detector;
 
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.allplayers.Item;
@@ -139,11 +139,22 @@ public class AllPlayersEventDetector
         Map<Long, Long> incomingItemsCount = getItemsCountMap(incomingItems);
 
         // Generate ITEM_ACQUIRED events
+        // Iterate over each entry (key/value pair) in the incomingItemsCount map
         for (Map.Entry<Long, Long> entry : incomingItemsCount.entrySet()) {
+
+            // Check if the currentItemsCount map does not contain this item OR the count of this item in the incomingItemsCount map is greater than its count in the currentItemsCount map
             if (!currentItemsCount.containsKey(entry.getKey()) || entry.getValue() > currentItemsCount.get(entry.getKey())) {
+
+                // Calculate the number of items acquired. If the item is already in the currentItemsCount map, subtract the old count from the new count. Otherwise, the number of items acquired is just the count in the incomingItemsCount map.
                 long numberOfItemsAcquired = currentItemsCount.containsKey(entry.getKey()) ? entry.getValue() - currentItemsCount.get(entry.getKey()) : entry.getValue();
+
+                // Generate an ITEM_ACQUIRED event for each item acquired
                 for (int i = 0; i < numberOfItemsAcquired; i++) {
+
+                    // Find the item in the incomingItems list with the same ID as the current entry in the map
                     Item acquiredItem = incomingItems.stream().filter(item -> item.getItemID().equals(entry.getKey())).findFirst().orElse(null);
+
+                    // If the item is not null, generate the event
                     if (acquiredItem != null) {
                         AllPlayersEvent event = new AllPlayersEvent();
                         event.setAllPlayersEventType(AllPlayersEventType.ITEM_ACQUIRED);
@@ -154,11 +165,22 @@ public class AllPlayersEventDetector
         }
 
         // Generate ITEM_SOLD_OR_CONSUMED events
+        // Iterate over each entry in the currentItemsCount map
         for (Map.Entry<Long, Long> entry : currentItemsCount.entrySet()) {
+
+            // Check if the incomingItemsCount map does not contain this item OR the count of this item in the currentItemsCount map is greater than its count in the incomingItemsCount map
             if (!incomingItemsCount.containsKey(entry.getKey()) || entry.getValue() > incomingItemsCount.get(entry.getKey())) {
+
+                // Calculate the number of items sold. If the item is already in the incomingItemsCount map, subtract the new count from the old count. Otherwise, the number of items sold is just the count in the currentItemsCount map.
                 long numberOfItemsSold = incomingItemsCount.containsKey(entry.getKey()) ? entry.getValue() - incomingItemsCount.get(entry.getKey()) : entry.getValue();
+
+                // Generate an ITEM_SOLD_OR_CONSUMED event for each item sold
                 for (int i = 0; i < numberOfItemsSold; i++) {
+
+                    // Find the item in the currentItems list with the same ID as the current entry in the map
                     Item soldItem = currentItems.stream().filter(item -> item.getItemID().equals(entry.getKey())).findFirst().orElse(null);
+
+                    // If the item is not null, generate the event
                     if (soldItem != null) {
                         AllPlayersEvent event = new AllPlayersEvent();
                         event.setAllPlayersEventType(AllPlayersEventType.ITEM_SOLD_OR_CONSUMED);

@@ -1,29 +1,9 @@
 package com.samdobsondev.lcde4j.api;
 
-public class ApiResponse<T> {
-    private final T responseObject;
-    private final String rawResponse;
-    private final int statusCode;
-
-    public ApiResponse(T responseObject, String rawResponse, int statusCode) {
-        this.responseObject = responseObject;
-        this.rawResponse = rawResponse;
-        this.statusCode = statusCode;
-    }
-
-    public T getResponseObject() {
-        return responseObject;
-    }
-
-    public String getRawResponse() {
-        return rawResponse;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public boolean isOk() {
+public record ApiResponse<T>(T responseObject, String rawResponse, int statusCode)
+{
+    public boolean success()
+    {
         return statusCode / 200 == 1;
     }
 }

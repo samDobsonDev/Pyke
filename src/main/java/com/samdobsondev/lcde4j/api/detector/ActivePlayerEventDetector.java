@@ -1,4 +1,4 @@
-package com.samdobsondev.lcde4j.api;
+package com.samdobsondev.lcde4j.api.detector;
 
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.activeplayer.ActivePlayer;

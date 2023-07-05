@@ -2,15 +2,20 @@ package com.samdobsondev.lcde4j.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.samdobsondev.lcde4j.api.detector.ActivePlayerEventDetector;
+import com.samdobsondev.lcde4j.api.detector.AllPlayersEventDetector;
+import com.samdobsondev.lcde4j.api.detector.AnnouncerNotificationEventDetector;
+import com.samdobsondev.lcde4j.api.detector.GameDataEventDetector;
+import com.samdobsondev.lcde4j.api.listener.AnnouncerNotificationEventListener;
+import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
+import com.samdobsondev.lcde4j.api.watcher.PortWatcher;
 import com.samdobsondev.lcde4j.exception.BaselineResponseException;
 import com.samdobsondev.lcde4j.exception.SSLContextCreationException;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEvent;
-import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEventType;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
-import com.samdobsondev.lcde4j.model.events.announcer.AnnouncerNotificationEvent;
-import com.samdobsondev.lcde4j.model.events.gamedata.GameDataEvent;
-import com.samdobsondev.lcde4j.model.events.gamedata.GameDataEventType;
+import com.samdobsondev.lcde4j.model.events.announcer.*;
+import com.samdobsondev.lcde4j.model.events.gamedata.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -21,6 +26,7 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,6 +48,8 @@ public class LCDE4J
     private final AtomicBoolean isPolling = new AtomicBoolean(false);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> pollingTask;
+    private final List<GameDataEventListener> gameDataEventListeners = new ArrayList<>();
+    private final List<AnnouncerNotificationEventListener> announcerNotificationEventListeners = new ArrayList<>();
 
     public LCDE4J() {
         this(isPortUp -> {});
@@ -102,10 +110,10 @@ public class LCDE4J
         pollingTask = scheduler.scheduleAtFixedRate(() -> {
             try {
                 ApiResponse<AllGameData> apiResponse = requestLiveData("/liveclientdata/allgamedata", AllGameData.class);
-                if (apiResponse == null || apiResponse.getStatusCode() == 404) {
+                if (apiResponse == null || apiResponse.statusCode() == 404) {
                     System.out.println("loading...");
                 } else {
-                    AllGameData incomingResponse = apiResponse.getResponseObject();
+                    AllGameData incomingResponse = apiResponse.responseObject();
 
                     // TODO: Fix bug where activePlayer.getAbilities(getQ) in the first incomingResponse is sometimes null
 
@@ -153,34 +161,129 @@ public class LCDE4J
     }
 
     private void processActivePlayerEvents(List<ActivePlayerEvent> activePlayerEvents) {
-        // Rather than printing, we need to fire the activePlayerEvents (replace this with the actual activePlayerEvent handling code)
-        for (ActivePlayerEvent activePlayerEvent : activePlayerEvents) {
-            if (activePlayerEvent.getActivePlayerEventType().equals(ActivePlayerEventType.GOLD_CHANGE)) {
-            } else {
-                System.out.println(activePlayerEvent);
+
+    }
+
+    private void processAllPlayerEvents(List<AllPlayersEvent> allPlayersEvents) {
+
+    }
+
+    private void processAnnouncerNotificationEvents(List<AnnouncerNotificationEvent> announcerNotificationEvents) {
+        for (AnnouncerNotificationEvent announcerNotificationEvent : announcerNotificationEvents) {
+            for (AnnouncerNotificationEventListener listener : announcerNotificationEventListeners) {
+                switch (announcerNotificationEvent.getAnnouncerNotificationEventType())
+                {
+                    case ACE ->
+                    {
+                        assert announcerNotificationEvent instanceof AceEvent;
+                        listener.onAce((AceEvent) announcerNotificationEvent);
+                    }
+                    case BARON_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof BaronKillEvent;
+                        listener.onBaronKill((BaronKillEvent) announcerNotificationEvent);
+                    }
+                    case CHAMPION_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof ChampionKillEvent;
+                        listener.onChampionKill((ChampionKillEvent) announcerNotificationEvent);
+                    }
+                    case DRAGON_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof DragonKillEvent;
+                        listener.onDragonKill((DragonKillEvent) announcerNotificationEvent);
+                    }
+                    case FIRST_BLOOD ->
+                    {
+                        assert announcerNotificationEvent instanceof FirstBloodEvent;
+                        listener.onFirstBlood((FirstBloodEvent) announcerNotificationEvent);
+                    }
+                    case FIRST_TURRET ->
+                    {
+                        assert announcerNotificationEvent instanceof FirstTurretEvent;
+                        listener.onFirstTurret((FirstTurretEvent) announcerNotificationEvent);
+                    }
+                    case GAME_END ->
+                    {
+                        assert announcerNotificationEvent instanceof GameEndEvent;
+                        listener.onGameEnd((GameEndEvent) announcerNotificationEvent);
+                    }
+                    case GAME_START ->
+                    {
+                        assert announcerNotificationEvent instanceof GameStartEvent;
+                        listener.onGameStart((GameStartEvent) announcerNotificationEvent);
+                    }
+                    case HERALD_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof HeraldKillEvent;
+                        listener.onHeraldKill((HeraldKillEvent) announcerNotificationEvent);
+                    }
+                    case INHIBITOR_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof InhibitorKillEvent;
+                        listener.onInhibitorKill((InhibitorKillEvent) announcerNotificationEvent);
+                    }
+                    case INHIBITOR_RESPAWN ->
+                    {
+                        assert announcerNotificationEvent instanceof InhibitorRespawnEvent;
+                        listener.onInhibitorRespawn((InhibitorRespawnEvent) announcerNotificationEvent);
+                    }
+                    case INHIBITOR_RESPAWNING_SOON ->
+                    {
+                        assert announcerNotificationEvent instanceof InhibitorRespawingSoonEvent;
+                        listener.onInhibitorRespawningSoon((InhibitorRespawingSoonEvent) announcerNotificationEvent);
+                    }
+                    case MINIONS_SPAWNING ->
+                    {
+                        assert announcerNotificationEvent instanceof MinionsSpawningEvent;
+                        listener.onMinionsSpawning((MinionsSpawningEvent) announcerNotificationEvent);
+                    }
+                    case MULTIKILL ->
+                    {
+                        assert announcerNotificationEvent instanceof MultikillEvent;
+                        listener.onMultikill((MultikillEvent) announcerNotificationEvent);
+                    }
+                    case TURRET_KILL ->
+                    {
+                        assert announcerNotificationEvent instanceof TurretKillEvent;
+                        listener.onTurretKill((TurretKillEvent) announcerNotificationEvent);
+                    }
+                }
             }
         }
     }
 
-    private void processAllPlayerEvents(List<AllPlayersEvent> allPlayersEvents) {
-        for (AllPlayersEvent allPlayersEvent : allPlayersEvents) {
-            System.out.println(allPlayersEvent);
-        }
-    }
-
-    private void processAnnouncerNotificationEvents(List<AnnouncerNotificationEvent> announcerNotificationEvents) {
-        // Rather than printing, we need to fire the announcerNotificationEvents (replace this with the actual announcerNotificationEvent handling code)
-        for (AnnouncerNotificationEvent announcerNotificationEvent : announcerNotificationEvents) {
-            System.out.println(announcerNotificationEvent);
-        }
-    }
-
     private void processGameDataEvents(List<GameDataEvent> gameDataEvents) {
-        // Rather than printing, we need to fire the gameDataEvents (replace this with the actual gameDataEvent handling code)
         for (GameDataEvent gameDataEvent : gameDataEvents) {
-            if (gameDataEvent.getGameDataEventType().equals(GameDataEventType.GAME_TIME_CHANGE)) {
-            } else {
-                System.out.println(gameDataEvent);
+            for (GameDataEventListener listener : gameDataEventListeners) {
+                switch (gameDataEvent.getGameDataEventType())
+                {
+                    case GAME_MODE ->
+                    {
+                        assert gameDataEvent instanceof GameModeEvent;
+                        listener.onGameModeChange((GameModeEvent) gameDataEvent);
+                    }
+                    case GAME_TIME_CHANGE ->
+                    {
+                        assert gameDataEvent instanceof GameTimeChangeEvent;
+                        listener.onGameTimeChange((GameTimeChangeEvent) gameDataEvent);
+                    }
+                    case MAP_NAME ->
+                    {
+                        assert gameDataEvent instanceof MapNameEvent;
+                        listener.onMapName((MapNameEvent) gameDataEvent);
+                    }
+                    case MAP_NUMBER ->
+                    {
+                        assert gameDataEvent instanceof MapNumberEvent;
+                        listener.onMapNumber((MapNumberEvent) gameDataEvent);
+                    }
+                    case MAP_TERRAIN_CHANGE ->
+                    {
+                        assert gameDataEvent instanceof MapTerrainChangeEvent;
+                        listener.onMapTerrainChange((MapTerrainChangeEvent) gameDataEvent);
+                    }
+                }
             }
         }
     }
@@ -273,5 +376,13 @@ public class LCDE4J
         }
 
         return new ApiResponse<>(t, rawResponse, statusCode);
+    }
+
+    public void registerGameDataEventListener(GameDataEventListener listener) {
+        gameDataEventListeners.add(listener);
+    }
+
+    public void registerAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
+        announcerNotificationEventListeners.add(listener);
     }
 }

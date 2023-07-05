@@ -40,4 +40,6 @@ public class AnnouncerNotification
     private Boolean stolen;
     @SerializedName("Assisters")
     private List<String> assisters;
+    @SerializedName("Result")
+    private String result;
 }

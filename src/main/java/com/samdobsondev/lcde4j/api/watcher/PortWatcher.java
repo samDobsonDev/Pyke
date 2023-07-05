@@ -1,4 +1,4 @@
-package com.samdobsondev.lcde4j.api;
+package com.samdobsondev.lcde4j.api.watcher;
 
 import java.io.IOException;
 import java.net.ServerSocket;

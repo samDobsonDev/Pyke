@@ -1,6 +1,7 @@
 package com.samdobsondev.lcde4j.model.events.gamedata;
 
-public enum GameDataEventType {
+public enum GameDataEventType
+{
     GAME_MODE,
     GAME_TIME_CHANGE,
     MAP_NAME,
