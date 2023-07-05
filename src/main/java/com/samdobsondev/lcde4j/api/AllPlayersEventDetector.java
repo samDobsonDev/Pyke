@@ -3,10 +3,13 @@ package com.samdobsondev.lcde4j.api;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.allplayers.Item;
 import com.samdobsondev.lcde4j.model.data.allplayers.Player;
+import com.samdobsondev.lcde4j.model.data.allplayers.Scores;
+import com.samdobsondev.lcde4j.model.data.allplayers.SummonerSpells;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEventType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AllPlayersEventDetector
 {
@@ -29,13 +32,24 @@ public class AllPlayersEventDetector
 
             // Check for item changes
             checkItemChanges(events, currentPlayer, incomingPlayer, incomingAllGameData, eventTime);
+
+            // Check for level changes
+            checkForLevelChanges(events, currentPlayer, incomingPlayer, incomingAllGameData, eventTime);
+
+            // Check for respawn timer changes
+            checkForRespawnTimerChanges(events, currentPlayer, incomingPlayer, incomingAllGameData, eventTime);
+
+            // Check for score changes
+            checkForScoreChanges(events, currentPlayer, incomingPlayer, incomingAllGameData, eventTime);
+
+            // Check for summoner spell changes
+            checkForSummonerSpellChanges(events, currentPlayer, incomingPlayer, incomingAllGameData, eventTime);
         }
 
         return events;
     }
 
     private void checkForPlayersJoined(List<AllPlayersEvent> events, List<Player> current, List<Player> incoming, AllGameData incomingAllGameData, Double eventTime) {
-        // Check for changes in the size of the current and incoming lists (total players). PLAYER_JOINED events thrown on size increase
         if (incoming.size() > current.size()) {
             List<Player> newPlayers = incoming.subList(current.size(), incoming.size());
             for (Player player : newPlayers) {
@@ -44,19 +58,29 @@ public class AllPlayersEventDetector
                 event.setAllPlayersEventTime(eventTime);
                 event.setAllGameData(incomingAllGameData);
                 event.setPlayer(player);
-                // add all static player info here
-                event.setChampionName(player.getChampionName());
-                event.setIsBot(player.getIsBot());
-                event.setPosition(player.getPosition());
-                event.setRawChampionName(player.getRawChampionName());
-                event.setKeystone(player.getRunes().getKeystone());
-                event.setPrimaryRuneTree(player.getRunes().getPrimaryRuneTree());
-                event.setSecondaryRuneTree(player.getRunes().getSecondaryRuneTree());
-                event.setSkinID(player.getSkinID());
-                event.setSummonerName(player.getSummonerName());
-                event.setSummonerSpellOne(player.getSummonerSpells().getSummonerSpellOne());
-                event.setSummonerSpellTwo(player.getSummonerSpells().getSummonerSpellTwo());
-                event.setTeam(player.getTeam());
+
+                // Utilizing Optional to avoid NullPointerExceptions (such as when adding Target Dummies to the game)
+                Optional.ofNullable(player.getChampionName()).ifPresent(event::setChampionName);
+                Optional.ofNullable(player.getIsBot()).ifPresent(event::setIsBot);
+                Optional.ofNullable(player.getPosition()).ifPresent(event::setPosition);
+                Optional.ofNullable(player.getRawChampionName()).ifPresent(event::setRawChampionName);
+
+                Optional.ofNullable(player.getRunes()).ifPresent(runes -> {
+                    Optional.ofNullable(runes.getKeystone()).ifPresent(event::setKeystone);
+                    Optional.ofNullable(runes.getPrimaryRuneTree()).ifPresent(event::setPrimaryRuneTree);
+                    Optional.ofNullable(runes.getSecondaryRuneTree()).ifPresent(event::setSecondaryRuneTree);
+                });
+
+                Optional.ofNullable(player.getSkinID()).ifPresent(event::setSkinID);
+                Optional.ofNullable(player.getSummonerName()).ifPresent(event::setSummonerName);
+
+                Optional.ofNullable(player.getSummonerSpells()).ifPresent(spells -> {
+                    Optional.ofNullable(spells.getSummonerSpellOne()).ifPresent(event::setSummonerSpellOne);
+                    Optional.ofNullable(spells.getSummonerSpellTwo()).ifPresent(event::setSummonerSpellTwo);
+                });
+
+                Optional.ofNullable(player.getTeam()).ifPresent(event::setTeam);
+
                 events.add(event);
             }
         }
@@ -92,39 +116,9 @@ public class AllPlayersEventDetector
         List<Item> currentItems = currentPlayer.getItems();
         List<Item> incomingItems = incomingPlayer.getItems();
 
-        // If the size of the incoming items list is greater, a new item has been bought
-        // TODO: Need to handle buying items from components items (also wards), which will take up the same slot rather than a new slot and not trigger an ITEM_BOUGHT event in the current implementation
-        if (incomingItems.size() > currentItems.size()) {
-            // Filter out the item/s that are not in the current list to get a list of the new item/s
-            List<Item> newItems = incomingItems.stream()
-                    .filter(item -> !currentItems.contains(item))
-                    .toList();
+        detectItemAcquiredAndItemSoldEvents(events, incomingPlayer, incomingAllGameData, eventTime, currentItems, incomingItems);
 
-            // Generate an ITEM_BOUGHT event for every new item in the list
-            for (Item newItem : newItems) {
-                AllPlayersEvent event = new AllPlayersEvent();
-                event.setAllPlayersEventType(AllPlayersEventType.ITEM_ACQUIRED);
-                generateItemAcquiredOrSoldEvent(events, incomingPlayer, incomingAllGameData, eventTime, newItem, event);
-            }
-        }
-
-        // If the size of the incoming items list is smaller, an item has been sold or consumed
-        // TODO: Need to handle the undo function when we undo the purchase of an item into it's components
-        else if (incomingItems.size() < currentItems.size()) {
-            // Filter out the items that are not in the incoming list
-            List<Item> soldItems = currentItems.stream()
-                    .filter(item -> !incomingItems.contains(item))
-                    .toList();
-
-            for (Item soldItem : soldItems) {
-                AllPlayersEvent event = new AllPlayersEvent();
-                event.setAllPlayersEventType(AllPlayersEventType.ITEM_SOLD_OR_CONSUMED);
-                generateItemAcquiredOrSoldEvent(events, incomingPlayer, incomingAllGameData, eventTime, soldItem, event);
-            }
-        }
-
-        // If the currentItems and incomingItems lists are the same size...
-        else {
+        if (incomingItems.size() == currentItems.size()) {
             detectSlotChanges(events, incomingPlayer, incomingAllGameData, eventTime, currentItems, incomingItems);
             for (int i = 0; i < currentItems.size(); i++) {
                 Item currentItem = currentItems.get(i);
@@ -139,13 +133,65 @@ public class AllPlayersEventDetector
         }
     }
 
-    private void generateItemAcquiredOrSoldEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item item, AllPlayersEvent event)
+    private void detectItemAcquiredAndItemSoldEvents(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, List<Item> currentItems, List<Item> incomingItems) {
+        // Get the counts of each item in the currentItems and incomingItems lists
+        Map<Long, Long> currentItemsCount = getItemsCountMap(currentItems);
+        Map<Long, Long> incomingItemsCount = getItemsCountMap(incomingItems);
+
+        // Generate ITEM_ACQUIRED events
+        for (Map.Entry<Long, Long> entry : incomingItemsCount.entrySet()) {
+            if (!currentItemsCount.containsKey(entry.getKey()) || entry.getValue() > currentItemsCount.get(entry.getKey())) {
+                long numberOfItemsAcquired = currentItemsCount.containsKey(entry.getKey()) ? entry.getValue() - currentItemsCount.get(entry.getKey()) : entry.getValue();
+                for (int i = 0; i < numberOfItemsAcquired; i++) {
+                    Item acquiredItem = incomingItems.stream().filter(item -> item.getItemID().equals(entry.getKey())).findFirst().orElse(null);
+                    if (acquiredItem != null) {
+                        AllPlayersEvent event = new AllPlayersEvent();
+                        event.setAllPlayersEventType(AllPlayersEventType.ITEM_ACQUIRED);
+                        generateItemAcquiredEvent(events, incomingPlayer, incomingAllGameData, eventTime, acquiredItem, event);
+                    }
+                }
+            }
+        }
+
+        // Generate ITEM_SOLD_OR_CONSUMED events
+        for (Map.Entry<Long, Long> entry : currentItemsCount.entrySet()) {
+            if (!incomingItemsCount.containsKey(entry.getKey()) || entry.getValue() > incomingItemsCount.get(entry.getKey())) {
+                long numberOfItemsSold = incomingItemsCount.containsKey(entry.getKey()) ? entry.getValue() - incomingItemsCount.get(entry.getKey()) : entry.getValue();
+                for (int i = 0; i < numberOfItemsSold; i++) {
+                    Item soldItem = currentItems.stream().filter(item -> item.getItemID().equals(entry.getKey())).findFirst().orElse(null);
+                    if (soldItem != null) {
+                        AllPlayersEvent event = new AllPlayersEvent();
+                        event.setAllPlayersEventType(AllPlayersEventType.ITEM_SOLD_OR_CONSUMED);
+                        generateItemSoldEvent(events, incomingPlayer, incomingAllGameData, eventTime, soldItem, event);
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<Long, Long> getItemsCountMap(List<Item> items) {
+        // We use the stream API to group items by their ID and count occurrences
+        return items.stream().collect(Collectors.groupingBy(Item::getItemID, Collectors.counting()));
+    }
+
+    private void generateItemAcquiredEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item item, AllPlayersEvent event)
     {
         event.setAllPlayersEventTime(eventTime);
         event.setAllGameData(incomingAllGameData);
         event.setPlayer(incomingPlayer);
         event.setChampionName(incomingPlayer.getChampionName());
-        event.setItem(item);
+        event.setAcquiredItem(item);
+        event.setSummonerName(incomingPlayer.getSummonerName());
+        events.add(event);
+    }
+
+    private void generateItemSoldEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item item, AllPlayersEvent event)
+    {
+        event.setAllPlayersEventTime(eventTime);
+        event.setAllGameData(incomingAllGameData);
+        event.setPlayer(incomingPlayer);
+        event.setChampionName(incomingPlayer.getChampionName());
+        event.setSoldOrConsumedItem(item);
         event.setSummonerName(incomingPlayer.getSummonerName());
         events.add(event);
     }
@@ -230,6 +276,7 @@ public class AllPlayersEventDetector
         transformations.put(3859L, 3860L); // Targon's Buckler -> Bulwark of the Mountain
         transformations.put(3850L, 3851L); // Spellthief's Edge -> Frostfang
         transformations.put(3851L, 3853L); // Frostfang -> Shard of True Ice
+        transformations.put(4638L, 4643L); // Watchful Wardstone -> Vigilant Wardstone
         transformations.put(4644L, 7024L); // Crown of the Shattered Queen -> Caesura
         transformations.put(6630L, 7015L); // Goredrinker -> Ceaseless Hunger
         transformations.put(6620L, 7033L); // Echoes of Helia -> Cry of the Shrieking City
@@ -258,7 +305,6 @@ public class AllPlayersEventDetector
         transformations.put(3152L, 7011L); // Hextech Rocketbelt -> Upgraded Aeropack
         transformations.put(4636L, 7010L); // Night Harvester -> Vespertide
         transformations.put(3142L, 7029L); // Youmuu's Ghostblade -> Youmuu's Wake
-        transformations.put(4638L, 4643L); // Watchful Wardstone -> Vigilant Wardstone
 
         return transformations;
     }
@@ -276,7 +322,7 @@ public class AllPlayersEventDetector
     }
 
     private void detectHeraldUsage(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item currentItem, Item incomingItem) {
-        // If the player was holding the Herald and is no longer holding it, the EYE_OF_HERALD_USED_OR_LOST event has occurred
+        // If the player was holding the Eye of Herald and is no longer holding it, an EYE_OF_HERALD_USED_OR_LOST event has occurred
         if (currentItem.getItemID() == 3513L && incomingItem.getItemID() != 3513L) {
             AllPlayersEvent event = new AllPlayersEvent();
             event.setAllPlayersEventType(AllPlayersEventType.EYE_OF_HERALD_USED_OR_LOST);
@@ -287,5 +333,135 @@ public class AllPlayersEventDetector
             event.setSummonerName(incomingPlayer.getSummonerName());
             events.add(event);
         }
+    }
+
+    private void checkForLevelChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
+        if (!currentPlayer.getLevel().equals(incomingPlayer.getLevel())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.LEVEL_UP);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setLevel(incomingPlayer.getLevel());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+    }
+
+    private void checkForRespawnTimerChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
+        if (incomingPlayer.getRespawnTimer() < currentPlayer.getRespawnTimer()) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.RESPAWN_TIMER_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setRespawnTimer(incomingPlayer.getRespawnTimer());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+    }
+
+    private void checkForScoreChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
+        Scores currentScores = currentPlayer.getScores();
+        Scores incomingScores = incomingPlayer.getScores();
+
+        if (!currentScores.getAssists().equals(incomingScores.getAssists())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.ASSISTS_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setAssists(incomingScores.getAssists());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+
+        // The CS score is updated every 10 CS, rather than every CS
+        if (!currentScores.getCreepScore().equals(incomingScores.getCreepScore())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.CS_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setCreepScore(incomingScores.getCreepScore());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+
+        if (!currentScores.getDeaths().equals(incomingScores.getDeaths())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.DEATHS_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setDeaths(incomingScores.getDeaths());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+
+        if (!currentScores.getKills().equals(incomingScores.getKills())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.KILLS_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setKills(incomingScores.getKills());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+
+        if (!currentScores.getWardScore().equals(incomingScores.getWardScore())) {
+            AllPlayersEvent event = new AllPlayersEvent();
+            event.setAllPlayersEventType(AllPlayersEventType.VISION_SCORE_CHANGE);
+            event.setAllPlayersEventTime(eventTime);
+            event.setAllGameData(incomingAllGameData);
+            event.setPlayer(incomingPlayer);
+            event.setChampionName(incomingPlayer.getChampionName());
+            event.setWardScore(incomingScores.getWardScore());
+            event.setSummonerName(incomingPlayer.getSummonerName());
+            events.add(event);
+        }
+    }
+
+    private void checkForSummonerSpellChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
+        SummonerSpells currentSummonerSpells = currentPlayer.getSummonerSpells();
+        SummonerSpells incomingSummonerSpells = incomingPlayer.getSummonerSpells();
+
+        // Utilizing Optionals to avoid NullPointerExceptions (such as when adding Target Dummies to the game)
+        Optional.ofNullable(currentSummonerSpells).ifPresent(current -> Optional.ofNullable(incomingSummonerSpells).ifPresent(incoming -> {
+            Optional.ofNullable(current.getSummonerSpellOne()).ifPresent(currentSpellOne -> {
+                Optional.ofNullable(incoming.getSummonerSpellOne()).ifPresent(incomingSpellOne -> {
+                    if (!currentSpellOne.equals(incomingSpellOne)) {
+                        AllPlayersEvent event = new AllPlayersEvent();
+                        event.setAllPlayersEventType(AllPlayersEventType.SUMMONER_SPELL_ONE_CHANGE);
+                        event.setAllPlayersEventTime(eventTime);
+                        event.setAllGameData(incomingAllGameData);
+                        event.setPlayer(incomingPlayer);
+                        event.setChampionName(incomingPlayer.getChampionName());
+                        event.setSummonerName(incomingPlayer.getSummonerName());
+                        events.add(event);
+                    }
+                });
+            });
+
+            Optional.ofNullable(current.getSummonerSpellTwo()).ifPresent(currentSpellTwo -> Optional.ofNullable(incoming.getSummonerSpellTwo()).ifPresent(incomingSpellTwo -> {
+                if (!currentSpellTwo.equals(incomingSpellTwo)) {
+                    AllPlayersEvent event = new AllPlayersEvent();
+                    event.setAllPlayersEventType(AllPlayersEventType.SUMMONER_SPELL_TWO_CHANGE);
+                    event.setAllPlayersEventTime(eventTime);
+                    event.setAllGameData(incomingAllGameData);
+                    event.setPlayer(incomingPlayer);
+                    event.setChampionName(incomingPlayer.getChampionName());
+                    event.setSummonerName(incomingPlayer.getSummonerName());
+                    events.add(event);
+                }
+            }));
+        }));
     }
 }

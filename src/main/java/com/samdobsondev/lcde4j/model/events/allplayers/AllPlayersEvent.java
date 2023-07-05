@@ -20,6 +20,8 @@ public class AllPlayersEvent {
     private Item item;
     private Item oldItem;
     private Item newItem;
+    private Item acquiredItem;
+    private Item soldOrConsumedItem;
     private Long oldItemSlot;
     private Long newItemSlot;
     private Long level;
