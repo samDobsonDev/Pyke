@@ -10,6 +10,7 @@ import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEventType;
 import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
 import com.samdobsondev.lcde4j.model.events.announcer.AnnouncerNotificationEvent;
 import com.samdobsondev.lcde4j.model.events.gamedata.GameDataEvent;
+import com.samdobsondev.lcde4j.model.events.gamedata.GameDataEventType;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -106,8 +107,7 @@ public class LCDE4J
                 } else {
                     AllGameData incomingResponse = apiResponse.getResponseObject();
 
-                    // TODO: Fix this! Slow down a bit as some fields (activePlayer.getAbilities(getQ)) in the first incomingResponse MIGHT be null if we go too quick
-                    Thread.sleep(10);
+                    // TODO: Fix bug where activePlayer.getAbilities(getQ) in the first incomingResponse is sometimes null
 
                     // Process all the events that have occurred in this response
                     processEvents(currentResponse.get(), incomingResponse);
@@ -178,21 +178,19 @@ public class LCDE4J
 
     private void processAnnouncerNotificationEvents(List<AnnouncerNotificationEvent> announcerNotificationEvents) {
         // Rather than printing, we need to fire the announcerNotificationEvents (replace this with the actual announcerNotificationEvent handling code)
-        /*
         for (AnnouncerNotificationEvent announcerNotificationEvent : announcerNotificationEvents) {
             System.out.println(announcerNotificationEvent);
-        } */
+        }
     }
 
     private void processGameDataEvents(List<GameDataEvent> gameDataEvents) {
         // Rather than printing, we need to fire the gameDataEvents (replace this with the actual gameDataEvent handling code)
-        /*
         for (GameDataEvent gameDataEvent : gameDataEvents) {
             if (gameDataEvent.getGameDataEventType().equals(GameDataEventType.GAME_TIME_CHANGE)) {
             } else {
                 System.out.println(gameDataEvent);
             }
-        } */
+        }
     }
 
     private void stopPolling() {
