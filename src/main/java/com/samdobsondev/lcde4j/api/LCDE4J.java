@@ -139,24 +139,16 @@ public class LCDE4J
         AnnouncerNotificationEventDetector announcerNotificationEventDetector = new AnnouncerNotificationEventDetector();
         AllPlayersEventDetector allPlayersEventDetector = new AllPlayersEventDetector();
 
-        // We use the ActivePlayerEventDetector to receive a list of ActivePlayerEvents/s that have occurred in the incomingResponse
         List<ActivePlayerEvent> activePlayerEvents = activePlayerEventDetector.detectEvents(currentResponse, incomingResponse, incomingResponse.getGameData().getGameTime());
-        // Process each ActivePlayerEvent
         processActivePlayerEvents(activePlayerEvents);
 
-        // We use the AllPlayersEventDetector to receive a list of AllPlayersEvent/s that have occurred in the incomingResponse
         List<AllPlayersEvent> allPlayersEvents = allPlayersEventDetector.detectEvents(currentResponse, incomingResponse, incomingResponse.getGameData().getGameTime());
-        // Process each AllPlayersEvent
         processAllPlayerEvents(allPlayersEvents);
 
-        // We use the AnnouncerNotificationEventDetector to receive a list of AnnouncerNotificationEvent/s that have occurred in the incomingResponse
         List<AnnouncerNotificationEvent> announcerNotificationEvents = announcerNotificationEventDetector.detectEvents(currentResponse, incomingResponse);
-        // Process each AnnouncerNotificationEvent
         processAnnouncerNotificationEvents(announcerNotificationEvents);
 
-        // We use the GameDataEventDetector to receive a list of GameDataEvent/s that have occurred in the incomingResponse
         List<GameDataEvent> gameDataEvents = gameDataEventDetector.detectEvents(currentResponse, incomingResponse, incomingResponse.getGameData().getGameTime());
-        // Process each GameDataEvent
         processGameDataEvents(gameDataEvents);
     }
 

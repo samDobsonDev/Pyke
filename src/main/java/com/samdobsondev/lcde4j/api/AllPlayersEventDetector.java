@@ -350,7 +350,7 @@ public class AllPlayersEventDetector
     }
 
     private void checkForRespawnTimerChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
-        if (incomingPlayer.getRespawnTimer() < currentPlayer.getRespawnTimer()) {
+        if (!incomingPlayer.getRespawnTimer().equals(currentPlayer.getRespawnTimer())) {
             AllPlayersEvent event = new AllPlayersEvent();
             event.setAllPlayersEventType(AllPlayersEventType.RESPAWN_TIMER_CHANGE);
             event.setAllPlayersEventTime(eventTime);
