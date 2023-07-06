@@ -177,7 +177,7 @@ public class LCDE4J {
                     // Update currentResponse to incomingResponse for the next poll
                     currentResponse.set(incomingResponse);
                 }
-            } catch (ConnectException e) { // it is possible (but-rare) that the port can go down mid-poll, such as when the game ends or crashes, so we catch that here
+            } catch (ConnectException e) { // it is possible that the port can go down mid-poll, such as when the game ends or crashes, so we catch that here
                 logger.error("API connection lost during active polling. Polling process will be terminated until connection is re-established...");
                 stopPolling();
             } catch (Exception e) {
