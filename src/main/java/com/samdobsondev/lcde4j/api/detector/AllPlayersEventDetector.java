@@ -50,7 +50,7 @@ public class AllPlayersEventDetector
             List<Player> newPlayers = incoming.subList(current.size(), incoming.size());
             for (Player player : newPlayers) {
 
-                // Use optional to handle null cases (such as when Target Dummies are in the game
+                // Use optional to handle null cases (such as when Target Dummies are in the game)
                 Runes runes = Optional.ofNullable(player.getRunes()).orElse(new Runes());
                 SummonerSpells summonerSpells = Optional.ofNullable(player.getSummonerSpells()).orElse(new SummonerSpells());
 

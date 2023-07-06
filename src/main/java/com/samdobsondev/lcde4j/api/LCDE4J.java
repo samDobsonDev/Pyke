@@ -88,6 +88,8 @@ public class LCDE4J {
     public boolean checkPort() {
         boolean isPortUp = this.portWatcher.isPortUp();
 
+        // TODO: Replace all instance of System.out with a logger
+
         if (previousPortStatus == null || isPortUp != previousPortStatus) {
             if (isPortUp) {
                 System.out.println("API Online, loading...");
