@@ -21,10 +21,10 @@
         </repository>
     </repositories>
 
-    <groupId>com.samdobsondev.lcde4j</groupId>
-    <artifactId>lcde4j</artifactId>
+    <groupId>com.samdobsondev.pyke</groupId>
+    <artifactId>pyke</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>LCDE4J</name>
+    <name>Pyke</name>
 
     <properties>
         <java.version>17</java.version>
