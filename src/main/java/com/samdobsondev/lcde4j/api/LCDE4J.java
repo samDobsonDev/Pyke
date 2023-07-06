@@ -13,6 +13,7 @@ import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
 import com.samdobsondev.lcde4j.api.watcher.PortWatcher;
 import com.samdobsondev.lcde4j.exception.BaselineResponseException;
 import com.samdobsondev.lcde4j.exception.SSLContextCreationException;
+import com.samdobsondev.lcde4j.exception.SSLContextCreationFailedException;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.events.activeplayer.*;
 import com.samdobsondev.lcde4j.model.events.allplayers.*;
@@ -64,19 +65,63 @@ public class LCDE4J {
     public LCDE4J(Consumer<Boolean> onPortStatusChange) {
         try {
             this.sslContext = createSSLContext();
+            logger.info("SSL context created successfully.");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.error("Failed to create SSL context", e);
+            throw new SSLContextCreationFailedException("Failed to create SSL context", e);
         }
-
         portWatcher = new PortWatcher();
         this.onPortStatusChange = onPortStatusChange;
     }
 
+    private SSLContext createSSLContext() throws SSLContextCreationException {
+        char[] password = "nopass".toCharArray();
+
+        try (InputStream is = getClass().getResourceAsStream("/riotgames.pem")) {
+            if (is == null) {
+                String errMsg = "Could not find certificate file '/riotgames.pem'";
+                logger.error(errMsg);
+                throw new SSLContextCreationException(errMsg);
+            }
+
+            // Load the keystore
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null, password);
+            logger.info("Keystore loaded...");
+
+            // Create a CertificateFactory and import the certificate
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
+            logger.info("Certificate imported...");
+
+            // Add the certificate to the keystore
+            ks.setCertificateEntry("riotgames", cert);
+            logger.info("Certificate added to keystore...");
+
+            // Create a TrustManagerFactory with the trusted store
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+            logger.info("TrustManagerFactory initialized with the trusted keystore...");
+
+            // Create an SSLContext with the trust manager
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, tmf.getTrustManagers(), null);
+            logger.info("Creating SSL context...");
+            return context;
+        } catch (Exception e) {
+            String errMsg = "Failed to create SSLContext";
+            logger.error(errMsg, e);
+            throw new SSLContextCreationException(errMsg, e);
+        }
+    }
+
     public void start() {
+        logger.info("Starting LCDE4J...");
         startPortWatcherService();
     }
 
     private void startPortWatcherService() {
+        logger.info("Starting port watcher service...");
         new Thread(() -> {
             portWatcherStarted.set(true);
             while (portWatcherStarted.get()) {
@@ -84,17 +129,19 @@ public class LCDE4J {
                     try {
                         Thread.sleep(100); // we check the status of the port every 100 milliseconds
                     } catch (InterruptedException ignored) {
+                        logger.warn("Interrupted while waiting to check port status.");
                     }
                 }
             }
         }).start();
+        logger.info("Port watcher service started.");
     }
 
     public boolean checkPort() {
         boolean isPortUp = this.portWatcher.isPortUp();
         if (previousPortStatus == null || isPortUp != previousPortStatus) {
             if (isPortUp) {
-                logger.info("API Online, loading...");
+                logger.info("API Online");
                 startPolling();
             } else {
                 logger.info("API Offline, start an active game instance...");
@@ -107,6 +154,7 @@ public class LCDE4J {
     }
 
     private void startPolling() {
+        logger.info("Polling...");
         isPolling.set(true);
 
         // Load baseline response from JSON file
@@ -116,7 +164,7 @@ public class LCDE4J {
             try {
                 ApiResponse<AllGameData> apiResponse = requestLiveData("/liveclientdata/allgamedata", AllGameData.class);
                 if (apiResponse == null || apiResponse.statusCode() == 404) {
-                    logger.info("loading...");
+                    logger.info("...");
                 } else {
                     AllGameData incomingResponse = apiResponse.responseObject();
 
@@ -132,30 +180,83 @@ public class LCDE4J {
                 logger.error("API connection lost during active polling. Polling process will be terminated until connection is re-established...");
                 stopPolling();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Unexpected exception occurred during polling", e);
             }
         }, 0, 250, TimeUnit.MILLISECONDS);
     }
 
     private AllGameData loadBaselineResponse() {
+        logger.info("Loading baseline response...");
         try (InputStream is = getClass().getResourceAsStream("/baselineResponse.json")) {
             assert is != null;
-            return GSON.fromJson(new InputStreamReader(is), AllGameData.class);
+            AllGameData data = GSON.fromJson(new InputStreamReader(is), AllGameData.class);
+            logger.info("Baseline response successfully loaded.");
+            return data;
         } catch (IOException e) {
+            logger.error("Failed to load baseline response", e);
             throw new BaselineResponseException("Failed to load baseline response", e);
         }
+    }
+
+    public ApiResponse<AllGameData> requestLiveData(String path, Class<AllGameData> clz) throws IOException {
+        return getResponse(path, clz, sslContext);
+    }
+
+    private <T> ApiResponse<T> getResponse(String endpoint, Class<T> clz, SSLContext sslContext) throws IOException {
+        URL url = new URL(BASE_URL + endpoint);
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+        // Set SSL context
+        conn.setSSLSocketFactory(sslContext.getSocketFactory());
+
+        // Set request method to GET
+        conn.setRequestMethod("GET");
+
+        // Get response code
+        int statusCode = conn.getResponseCode();
+
+        // If status code is 404, return error response
+        if (statusCode == 404) {
+            return new ApiResponse<>(null, "...", statusCode);
+        }
+
+        // Read the response
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String inputLine;
+        StringBuilder content = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+
+        // Close connections
+        in.close();
+        conn.disconnect();
+
+        // Parse JSON response
+        T t = null;
+        String rawResponse = content.toString();
+
+        if (statusCode / 200 == 1 && !rawResponse.isEmpty() && clz != Void.class) {
+            t = GSON.fromJson(rawResponse, clz);
+        }
+
+        return new ApiResponse<>(t, rawResponse, statusCode);
     }
 
     private void stopPolling() {
         isPolling.set(false);
         if (pollingTask != null) {
+            logger.info("Stopping polling...");
             pollingTask.cancel(false);
+            logger.info("Polling has been stopped.");
         }
     }
 
     public void stop() {
+        logger.info("Stopping the LCDE4J service...");
         portWatcherStarted.set(false);
         scheduler.shutdown();
+        logger.info("LCDE4J service has been stopped.");
     }
 
     private void processEvents(AllGameData currentResponse, AllGameData incomingResponse) {
@@ -431,113 +532,44 @@ public class LCDE4J {
         }
     }
 
-    private SSLContext createSSLContext() throws SSLContextCreationException {
-        char[] password = "nopass".toCharArray();
-
-        try (InputStream is = getClass().getResourceAsStream("/riotgames.pem")) {
-            if (is == null) {
-                throw new SSLContextCreationException("Could not find certificate file '/riotgames.pem'");
-            }
-
-            // Load the keystore
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(null, password);
-
-            // Create a CertificateFactory and import the certificate
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
-
-            // Add the certificate to the keystore
-            ks.setCertificateEntry("riotgames", cert);
-
-            // Create a TrustManagerFactory with the trusted store
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(ks);
-
-            // Create an SSLContext with the trust manager
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, tmf.getTrustManagers(), null);
-
-            return context;
-        } catch (Exception e) {
-            throw new SSLContextCreationException("Failed to create SSLContext", e);
-        }
-    }
-
-    public ApiResponse<AllGameData> requestLiveData(String path, Class<AllGameData> clz) throws Exception {
-        return getResponse(path, clz, sslContext);
-    }
-
-    private <T> ApiResponse<T> getResponse(String endpoint, Class<T> clz, SSLContext sslContext) throws IOException {
-        URL url = new URL(BASE_URL + endpoint);
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-        // Set SSL context
-        conn.setSSLSocketFactory(sslContext.getSocketFactory());
-
-        // Set request method to GET
-        conn.setRequestMethod("GET");
-
-        // Get response code
-        int statusCode = conn.getResponseCode();
-
-        // If status code is 404, return error response
-        if (statusCode == 404) {
-            return new ApiResponse<>(null, "...", statusCode);
-        }
-
-        // Read the response
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
-
-        // Close connections
-        in.close();
-        conn.disconnect();
-
-        // Parse JSON response
-        T t = null;
-        String rawResponse = content.toString();
-
-        if (statusCode / 200 == 1 && !rawResponse.isEmpty() && clz != Void.class) {
-            t = GSON.fromJson(rawResponse, clz);
-        }
-
-        return new ApiResponse<>(t, rawResponse, statusCode);
-    }
-
     public void registerActivePlayerEventListener(ActivePlayerEventListener listener) {
         activePlayerEventListeners.add(listener);
+        logger.info("ActivePlayerEventListener registered");
     }
 
     public void removeActivePlayerEventListener(ActivePlayerEventListener listener) {
         activePlayerEventListeners.remove(listener);
+        logger.info("ActivePlayerEventListener removed");
     }
 
     public void registerAllPlayersEventListener(AllPlayersEventListener listener) {
         allPlayersEventListeners.add(listener);
+        logger.info("AllPlayersEventListener registered");
     }
 
     public void removeAllPlayersEventListener(AllPlayersEventListener listener) {
         allPlayersEventListeners.remove(listener);
+        logger.info("AllPlayersEventListener removed");
     }
 
     public void registerAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
         announcerNotificationEventListeners.add(listener);
+        logger.info("AnnouncerNotificationEventListener registered");
     }
 
     public void removeAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
         announcerNotificationEventListeners.remove(listener);
+        logger.info("AnnouncerNotificationEventListener removed");
     }
 
     public void registerGameDataEventListener(GameDataEventListener listener) {
         gameDataEventListeners.add(listener);
+        logger.info("GameDataEventListener registered");
     }
 
     public void removeGameDataEventListener(GameDataEventListener listener) {
         gameDataEventListeners.remove(listener);
+        logger.info("GameDataEventListener removed");
     }
+
 }
