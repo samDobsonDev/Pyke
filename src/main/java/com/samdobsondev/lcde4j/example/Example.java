@@ -10,13 +10,11 @@ import com.samdobsondev.lcde4j.model.events.announcer.MinionsSpawningEvent;
 import com.samdobsondev.lcde4j.model.events.gamedata.MapTerrainChangeEvent;
 
 public class Example {
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         LCDE4J lcde4J = new LCDE4J();
         lcde4J.start();
 
-        lcde4J.registerAllPlayersEventListener(new AllPlayersEventListener()
-        {
+        lcde4J.registerAllPlayersEventListener(new AllPlayersEventListener() {
             @Override
             public void onEyeOfHeraldUsedOrLost(EyeOfHeraldUsedOrLostEvent event) {
                 System.out.println(event.getChampionName() + " used or lost the Herald!");
@@ -43,8 +41,7 @@ public class Example {
             }
         });
 
-        lcde4J.registerAnnouncerNotificationEventListener(new AnnouncerNotificationEventListener()
-        {
+        lcde4J.registerAnnouncerNotificationEventListener(new AnnouncerNotificationEventListener() {
             @Override
             public void onMinionsSpawning(MinionsSpawningEvent event) {
                 System.out.println("Minions Spawning!");
@@ -56,8 +53,7 @@ public class Example {
             }
         });
 
-        lcde4J.registerGameDataEventListener(new GameDataEventListener()
-        {
+        lcde4J.registerGameDataEventListener(new GameDataEventListener() {
             @Override
             public void onMapTerrainChange(MapTerrainChangeEvent event) {
                 System.out.println("Map Terrain has changed to: " + event.getMapTerrain());
