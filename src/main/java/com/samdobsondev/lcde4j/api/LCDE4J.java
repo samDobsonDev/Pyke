@@ -37,8 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class LCDE4J
-{
+public class LCDE4J {
     private static final String BASE_URL = "https://127.0.0.1:2999";
     private static final Gson GSON = new GsonBuilder().create();
     private final SSLContext sslContext;
