@@ -20,6 +20,10 @@ public class Example {
             @Override
             public void onLevelUp(ActivePlayerLevelUpEvent event) {
                 System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " leveled up to level " + event.getLevel());
+
+                if (event.getLevel() >= 16) {
+                    lcde4J.stop(); // stops the polling and port watching
+                }
             }
         });
 
