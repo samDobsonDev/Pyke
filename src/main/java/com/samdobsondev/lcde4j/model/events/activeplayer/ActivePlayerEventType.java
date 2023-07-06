@@ -2,15 +2,15 @@ package com.samdobsondev.lcde4j.model.events.activeplayer;
 
 public enum ActivePlayerEventType {
     ABILITY_LEVEL_UP,
-    STAT_CHANGE,
-    RESOURCE_TYPE,
-    GOLD_CHANGE,
     GENERAL_RUNE,
+    GOLD_CHANGE,
     KEYSTONE,
-    PRIMARY_RUNE_TREE,
-    SECONDARY_RUNE_TREE,
-    STAT_RUNE,
     LEVEL_UP,
+    PRIMARY_RUNE_TREE,
+    RESOURCE_TYPE,
+    SECONDARY_RUNE_TREE,
+    STAT_CHANGE,
+    STAT_RUNE,
     SUMMONER_NAME,
     TEAM_RELATIVE_COLORS_CHANGE
 }

@@ -6,6 +6,7 @@ import com.samdobsondev.lcde4j.api.detector.ActivePlayerEventDetector;
 import com.samdobsondev.lcde4j.api.detector.AllPlayersEventDetector;
 import com.samdobsondev.lcde4j.api.detector.AnnouncerNotificationEventDetector;
 import com.samdobsondev.lcde4j.api.detector.GameDataEventDetector;
+import com.samdobsondev.lcde4j.api.listener.ActivePlayerEventListener;
 import com.samdobsondev.lcde4j.api.listener.AllPlayersEventListener;
 import com.samdobsondev.lcde4j.api.listener.AnnouncerNotificationEventListener;
 import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
@@ -13,7 +14,7 @@ import com.samdobsondev.lcde4j.api.watcher.PortWatcher;
 import com.samdobsondev.lcde4j.exception.BaselineResponseException;
 import com.samdobsondev.lcde4j.exception.SSLContextCreationException;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
-import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEvent;
+import com.samdobsondev.lcde4j.model.events.activeplayer.*;
 import com.samdobsondev.lcde4j.model.events.allplayers.*;
 import com.samdobsondev.lcde4j.model.events.announcer.*;
 import com.samdobsondev.lcde4j.model.events.gamedata.*;
@@ -48,6 +49,7 @@ public class LCDE4J {
     private final AtomicBoolean isPolling = new AtomicBoolean(false);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> pollingTask;
+    private final List<ActivePlayerEventListener> activePlayerEventListeners = new ArrayList<>();
     private final List<AllPlayersEventListener> allPlayersEventListeners = new ArrayList<>();
     private final List<AnnouncerNotificationEventListener> announcerNotificationEventListeners = new ArrayList<>();
     private final List<GameDataEventListener> gameDataEventListeners = new ArrayList<>();
@@ -164,8 +166,62 @@ public class LCDE4J {
     }
 
     private void processActivePlayerEvents(List<ActivePlayerEvent> activePlayerEvents) {
-
+        for (ActivePlayerEvent activePlayerEvent : activePlayerEvents) {
+            for (ActivePlayerEventListener listener : activePlayerEventListeners) {
+                switch (activePlayerEvent.getActivePlayerEventType()) {
+                    case ABILITY_LEVEL_UP -> {
+                        assert activePlayerEvent instanceof AbilityLevelUpEvent;
+                        listener.onAbilityLevelUp((AbilityLevelUpEvent) activePlayerEvent);
+                    }
+                    case GENERAL_RUNE -> {
+                        assert activePlayerEvent instanceof GeneralRuneEvent;
+                        listener.onGeneralRune((GeneralRuneEvent) activePlayerEvent);
+                    }
+                    case GOLD_CHANGE -> {
+                        assert activePlayerEvent instanceof GoldChangeEvent;
+                        listener.onGoldChange((GoldChangeEvent) activePlayerEvent);
+                    }
+                    case KEYSTONE -> {
+                        assert activePlayerEvent instanceof KeystoneEvent;
+                        listener.onKeystone((KeystoneEvent) activePlayerEvent);
+                    }
+                    case LEVEL_UP -> {
+                        assert activePlayerEvent instanceof ActivePlayerLevelUpEvent;
+                        listener.onLevelUp((ActivePlayerLevelUpEvent) activePlayerEvent);
+                    }
+                    case PRIMARY_RUNE_TREE -> {
+                        assert activePlayerEvent instanceof PrimaryRuneTreeEvent;
+                        listener.onPrimaryRuneTree((PrimaryRuneTreeEvent) activePlayerEvent);
+                    }
+                    case RESOURCE_TYPE -> {
+                        assert activePlayerEvent instanceof ResourceTypeChangeEvent;
+                        listener.onResourceTypeChange((ResourceTypeChangeEvent) activePlayerEvent);
+                    }
+                    case SECONDARY_RUNE_TREE -> {
+                        assert activePlayerEvent instanceof SecondaryRuneTreeEvent;
+                        listener.onSecondaryRuneTree((SecondaryRuneTreeEvent) activePlayerEvent);
+                    }
+                    case STAT_CHANGE -> {
+                        assert activePlayerEvent instanceof StatChangeEvent;
+                        listener.onStatChange((StatChangeEvent) activePlayerEvent);
+                    }
+                    case STAT_RUNE -> {
+                        assert activePlayerEvent instanceof StatRuneEvent;
+                        listener.onStatRune((StatRuneEvent) activePlayerEvent);
+                    }
+                    case SUMMONER_NAME -> {
+                        assert activePlayerEvent instanceof SummonerNameEvent;
+                        listener.onSummonerName((SummonerNameEvent) activePlayerEvent);
+                    }
+                    case TEAM_RELATIVE_COLORS_CHANGE -> {
+                        assert activePlayerEvent instanceof TeamRelativeColorsChangeEvent;
+                        listener.onTeamRelativeColorsChange((TeamRelativeColorsChangeEvent) activePlayerEvent);
+                    }
+                }
+            }
+        }
     }
+
 
     private void processAllPlayerEvents(List<AllPlayersEvent> allPlayersEvents) {
         for (AllPlayersEvent allPlayersEvent : allPlayersEvents) {
@@ -453,15 +509,35 @@ public class LCDE4J {
         return new ApiResponse<>(t, rawResponse, statusCode);
     }
 
-    public void registerGameDataEventListener(GameDataEventListener listener) {
-        gameDataEventListeners.add(listener);
+    public void registerActivePlayerEventListener(ActivePlayerEventListener listener) {
+        activePlayerEventListeners.add(listener);
+    }
+
+    public void removeActivePlayerEventListener(ActivePlayerEventListener listener) {
+        activePlayerEventListeners.remove(listener);
+    }
+
+    public void registerAllPlayersEventListener(AllPlayersEventListener listener) {
+        allPlayersEventListeners.add(listener);
+    }
+
+    public void removeAllPlayersEventListener(AllPlayersEventListener listener) {
+        allPlayersEventListeners.remove(listener);
     }
 
     public void registerAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
         announcerNotificationEventListeners.add(listener);
     }
 
-    public void registerAllPlayersEventListener(AllPlayersEventListener listener) {
-        allPlayersEventListeners.add(listener);
+    public void removeAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
+        announcerNotificationEventListeners.remove(listener);
+    }
+
+    public void registerGameDataEventListener(GameDataEventListener listener) {
+        gameDataEventListeners.add(listener);
+    }
+
+    public void removeGameDataEventListener(GameDataEventListener listener) {
+        gameDataEventListeners.remove(listener);
     }
 }

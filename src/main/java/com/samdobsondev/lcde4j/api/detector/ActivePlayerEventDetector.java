@@ -6,8 +6,7 @@ import com.samdobsondev.lcde4j.model.data.activeplayer.championstats.ChampionSta
 import com.samdobsondev.lcde4j.model.data.activeplayer.fullrunes.StatRune;
 import com.samdobsondev.lcde4j.model.data.common.Rune;
 import com.samdobsondev.lcde4j.model.data.common.RuneTree;
-import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEvent;
-import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEventType;
+import com.samdobsondev.lcde4j.model.events.activeplayer.*;
 import com.samdobsondev.lcde4j.model.data.activeplayer.abilities.*;
 
 import java.lang.reflect.Field;
@@ -32,11 +31,10 @@ public class ActivePlayerEventDetector {
 
         // Check for gold change
         if (!current.getCurrentGold().equals(incoming.getCurrentGold())) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.GOLD_CHANGE);
-            event.setActivePlayerEventTime(eventTime);
-            event.setGoldAmount(incoming.getCurrentGold());
-            event.setAllGameData(incomingAllGameData);
+            GoldChangeEvent event = new GoldChangeEvent(ActivePlayerEventType.GOLD_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incoming.getCurrentGold());
             events.add(event);
         }
 
@@ -49,31 +47,28 @@ public class ActivePlayerEventDetector {
 
         // Check for level change
         if (!current.getLevel().equals(incoming.getLevel())) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.LEVEL_UP);
-            event.setActivePlayerEventTime(eventTime);
-            event.setLevel(incoming.getLevel());
-            event.setAllGameData(incomingAllGameData);
+            ActivePlayerLevelUpEvent event = new ActivePlayerLevelUpEvent(ActivePlayerEventType.LEVEL_UP,
+                    eventTime,
+                    incomingAllGameData,
+                    incoming.getLevel());
             events.add(event);
         }
 
         // Check for Summoner Name
         if (!current.getSummonerName().equals(incoming.getSummonerName())) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.SUMMONER_NAME);
-            event.setActivePlayerEventTime(eventTime);
-            event.setSummonerName(incoming.getSummonerName());
-            event.setAllGameData(incomingAllGameData);
+            SummonerNameEvent event = new SummonerNameEvent(ActivePlayerEventType.SUMMONER_NAME,
+                    eventTime,
+                    incomingAllGameData,
+                    incoming.getSummonerName());
             events.add(event);
         }
 
         // Check for Team Relative Colors
         if (!current.getTeamRelativeColors().equals(incoming.getTeamRelativeColors())) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.TEAM_RELATIVE_COLORS_CHANGE);
-            event.setActivePlayerEventTime(eventTime);
-            event.setTeamRelativeColors(incoming.getTeamRelativeColors());
-            event.setAllGameData(incomingAllGameData);
+            TeamRelativeColorsChangeEvent event = new TeamRelativeColorsChangeEvent(ActivePlayerEventType.TEAM_RELATIVE_COLORS_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incoming.getTeamRelativeColors());
             events.add(event);
         }
 
@@ -82,12 +77,11 @@ public class ActivePlayerEventDetector {
 
     private void checkAbilityLevelChange(List<ActivePlayerEvent> events, Ability currentAbility, Ability incomingAbility, Double eventTime, String abilityName, AllGameData incoming) {
         if (!currentAbility.getAbilityLevel().equals(incomingAbility.getAbilityLevel())) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.ABILITY_LEVEL_UP);
-            event.setActivePlayerEventTime(eventTime);
-            event.setAbility(abilityName);
-            event.setAbilityLevel(incomingAbility.getAbilityLevel().toString());
-            event.setAllGameData(incoming);
+            AbilityLevelUpEvent event = new AbilityLevelUpEvent(ActivePlayerEventType.ABILITY_LEVEL_UP,
+                    eventTime,
+                    incoming,
+                    abilityName,
+                    incomingAbility.getAbilityLevel());
             events.add(event);
         }
     }
@@ -101,27 +95,22 @@ public class ActivePlayerEventDetector {
                 if (field.getType().equals(String.class)) {
                     String currentStat = (String) field.get(currentStats);
                     String incomingStat = (String) field.get(incomingStats);
-
                     if (!currentStat.equals(incomingStat)) {
-                        ActivePlayerEvent event = new ActivePlayerEvent();
-                        event.setActivePlayerEventType(ActivePlayerEventType.RESOURCE_TYPE);
-                        event.setActivePlayerEventTime(eventTime);
-                        event.setChampionStat(field.getName());
-                        event.setResourceType(incomingStat);
-                        event.setAllGameData(incoming);
+                        ResourceTypeChangeEvent event = new ResourceTypeChangeEvent(ActivePlayerEventType.RESOURCE_TYPE,
+                                eventTime,
+                                incoming,
+                                incomingStat);
                         events.add(event);
                     }
                 } else if (field.getType().equals(Double.class)) {
                     Double currentStat = (Double) field.get(currentStats);
                     Double incomingStat = (Double) field.get(incomingStats);
-
                     if (!currentStat.equals(incomingStat)) {
-                        ActivePlayerEvent event = new ActivePlayerEvent();
-                        event.setActivePlayerEventType(ActivePlayerEventType.STAT_CHANGE);
-                        event.setActivePlayerEventTime(eventTime);
-                        event.setChampionStat(field.getName());
-                        event.setChampionStatAmount(incomingStat);
-                        event.setAllGameData(incoming);
+                        StatChangeEvent event = new StatChangeEvent(ActivePlayerEventType.STAT_CHANGE,
+                                eventTime,
+                                incoming,
+                                field.getName(),
+                                incomingStat);
                         events.add(event);
                     }
                 }
@@ -134,11 +123,10 @@ public class ActivePlayerEventDetector {
     private void checkForGeneralRunes(List<ActivePlayerEvent> events, List<Rune> currentRunes, List<Rune> incomingRunes, Double eventTime, AllGameData incoming) {
         for (Rune incomingRune : incomingRunes) {
             if (!currentRunes.contains(incomingRune)) {
-                ActivePlayerEvent event = new ActivePlayerEvent();
-                event.setActivePlayerEventType(ActivePlayerEventType.GENERAL_RUNE);
-                event.setActivePlayerEventTime(eventTime);
-                event.setRune(incomingRune);
-                event.setAllGameData(incoming);
+                GeneralRuneEvent event = new GeneralRuneEvent(ActivePlayerEventType.GENERAL_RUNE,
+                        eventTime,
+                        incoming,
+                        incomingRune);
                 events.add(event);
             }
         }
@@ -146,33 +134,30 @@ public class ActivePlayerEventDetector {
 
     private void checkForKeystone(List<ActivePlayerEvent> events, Rune currentRune, Rune incomingRune, Double eventTime, AllGameData incoming) {
         if (!currentRune.equals(incomingRune)) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.KEYSTONE);
-            event.setActivePlayerEventTime(eventTime);
-            event.setRune(incomingRune);
-            event.setAllGameData(incoming);
+            KeystoneEvent event = new KeystoneEvent(ActivePlayerEventType.KEYSTONE,
+                    eventTime,
+                    incoming,
+                    incomingRune);
             events.add(event);
         }
     }
 
     private void checkForPrimaryRuneTree(List<ActivePlayerEvent> events, RuneTree currentRuneTree, RuneTree incomingRuneTree, Double eventTime, AllGameData incoming) {
         if (!currentRuneTree.equals(incomingRuneTree)) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.PRIMARY_RUNE_TREE);
-            event.setActivePlayerEventTime(eventTime);
-            event.setRuneTree(incomingRuneTree);
-            event.setAllGameData(incoming);
+            PrimaryRuneTreeEvent event = new PrimaryRuneTreeEvent(ActivePlayerEventType.PRIMARY_RUNE_TREE,
+                    eventTime,
+                    incoming,
+                    incomingRuneTree);
             events.add(event);
         }
     }
 
     private void checkForSecondaryRuneTree(List<ActivePlayerEvent> events, RuneTree currentRuneTree, RuneTree incomingRuneTree, Double eventTime, AllGameData incoming) {
         if (!currentRuneTree.equals(incomingRuneTree)) {
-            ActivePlayerEvent event = new ActivePlayerEvent();
-            event.setActivePlayerEventType(ActivePlayerEventType.SECONDARY_RUNE_TREE);
-            event.setActivePlayerEventTime(eventTime);
-            event.setRuneTree(incomingRuneTree);
-            event.setAllGameData(incoming);
+            SecondaryRuneTreeEvent event = new SecondaryRuneTreeEvent(ActivePlayerEventType.SECONDARY_RUNE_TREE,
+                    eventTime,
+                    incoming,
+                    incomingRuneTree);
             events.add(event);
         }
     }
@@ -180,11 +165,10 @@ public class ActivePlayerEventDetector {
     private void checkForStatRunes(List<ActivePlayerEvent> events, List<StatRune> currentStatRunes, List<StatRune> incomingStatRunes, Double eventTime, AllGameData incoming) {
         for (StatRune incomingStatRune : incomingStatRunes) {
             if (!currentStatRunes.contains(incomingStatRune)) {
-                ActivePlayerEvent event = new ActivePlayerEvent();
-                event.setActivePlayerEventType(ActivePlayerEventType.STAT_RUNE);
-                event.setActivePlayerEventTime(eventTime);
-                event.setStatRune(incomingStatRune);
-                event.setAllGameData(incoming);
+                StatRuneEvent event = new StatRuneEvent(ActivePlayerEventType.STAT_RUNE,
+                        eventTime,
+                        incoming,
+                        incomingStatRune);
                 events.add(event);
             }
         }

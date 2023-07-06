@@ -1,9 +1,11 @@
 package com.samdobsondev.lcde4j.example;
 
 import com.samdobsondev.lcde4j.api.LCDE4J;
+import com.samdobsondev.lcde4j.api.listener.ActivePlayerEventListener;
 import com.samdobsondev.lcde4j.api.listener.AllPlayersEventListener;
 import com.samdobsondev.lcde4j.api.listener.AnnouncerNotificationEventListener;
 import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
+import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerLevelUpEvent;
 import com.samdobsondev.lcde4j.model.events.allplayers.*;
 import com.samdobsondev.lcde4j.model.events.announcer.FirstBloodEvent;
 import com.samdobsondev.lcde4j.model.events.announcer.MinionsSpawningEvent;
@@ -13,6 +15,12 @@ public class Example {
     public static void main(String[] args) {
         LCDE4J lcde4J = new LCDE4J();
         lcde4J.start();
+        lcde4J.registerActivePlayerEventListener(new ActivePlayerEventListener() {
+            @Override
+            public void onLevelUp(ActivePlayerLevelUpEvent event) {
+                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " levelled up to level " + event.getLevel());
+            }
+        });
 
         lcde4J.registerAllPlayersEventListener(new AllPlayersEventListener() {
             @Override
