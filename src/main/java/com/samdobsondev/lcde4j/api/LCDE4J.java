@@ -169,6 +169,7 @@ public class LCDE4J {
                     AllGameData incomingResponse = apiResponse.responseObject();
 
                     // TODO: Fix bug where activePlayer.getAbilities(getQ) in the first incomingResponse is sometimes null
+                    // TODO: Rename project to Pyke
 
                     // Dispatches all events that have occurred to the relevant listeners
                     processEvents(currentResponse.get(), incomingResponse);
