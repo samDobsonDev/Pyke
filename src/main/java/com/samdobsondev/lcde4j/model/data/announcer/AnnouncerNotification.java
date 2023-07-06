@@ -6,8 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class AnnouncerNotification
-{
+public class AnnouncerNotification {
     @SerializedName("EventID")
     private Long announcerEventID;
     @SerializedName("EventName")

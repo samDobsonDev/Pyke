@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.data.common;
 import lombok.Data;
 
 @Data
-public class Rune
-{
+public class Rune {
     private String displayName;
     private Long id;
     private String rawDescription;

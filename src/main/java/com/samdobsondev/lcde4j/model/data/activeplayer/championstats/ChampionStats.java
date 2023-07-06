@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.data.activeplayer.championstats;
 import lombok.Data;
 
 @Data
-public class ChampionStats
-{
+public class ChampionStats {
     private Double abilityHaste;
     private Double abilityPower;
     private Double armor;

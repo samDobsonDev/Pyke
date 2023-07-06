@@ -2,8 +2,7 @@ package com.samdobsondev.lcde4j.model.events.gamedata;
 
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 
-public class GameModeEvent implements GameDataEvent
-{
+public class GameModeEvent implements GameDataEvent {
     private final GameDataEventType gameDataEventType;
     private final Double gameDataEventTime;
     private final AllGameData allGameData;
@@ -18,20 +17,20 @@ public class GameModeEvent implements GameDataEvent
 
     @Override
     public GameDataEventType getGameDataEventType() {
-        return gameDataEventType;
+        return this.gameDataEventType;
     }
 
     @Override
     public Double getGameDataEventTime() {
-        return gameDataEventTime;
+        return this.gameDataEventTime;
     }
 
     @Override
     public AllGameData getAllGameData() {
-        return allGameData;
+        return this.allGameData;
     }
 
     public String getGameMode() {
-        return gameMode;
+        return this.gameMode;
     }
 }

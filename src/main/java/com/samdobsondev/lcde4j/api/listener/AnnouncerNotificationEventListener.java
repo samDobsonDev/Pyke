@@ -2,8 +2,7 @@ package com.samdobsondev.lcde4j.api.listener;
 
 import com.samdobsondev.lcde4j.model.events.announcer.*;
 
-public interface AnnouncerNotificationEventListener
-{
+public interface AnnouncerNotificationEventListener {
     default void onAce(AceEvent event) { }
     default void onBaronKill(BaronKillEvent event) { }
     default void onChampionKill(ChampionKillEvent event) { }

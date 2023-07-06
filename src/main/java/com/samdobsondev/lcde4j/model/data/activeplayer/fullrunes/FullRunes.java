@@ -7,8 +7,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class FullRunes
-{
+public class FullRunes {
     private List<Rune> generalRunes;
     private Rune keystone;
     private RuneTree primaryRuneTree;

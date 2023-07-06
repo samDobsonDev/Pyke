@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.events.announcer;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
-public class AceEvent implements AnnouncerNotificationEvent
-{
+public class AceEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
@@ -12,7 +11,12 @@ public class AceEvent implements AnnouncerNotificationEvent
     private final String acer;
     private final String acingTeam;
 
-    public AceEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData, String acer, String acingTeam) {
+    public AceEvent(AnnouncerNotificationType announcerNotificationType,
+                    Double announcerEventTime,
+                    Long announcerEventID,
+                    AllGameData allGameData,
+                    String acer,
+                    String acingTeam) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;

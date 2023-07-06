@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.events.announcer;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
-public class GameEndEvent implements AnnouncerNotificationEvent
-{
+public class GameEndEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
@@ -12,8 +11,11 @@ public class GameEndEvent implements AnnouncerNotificationEvent
 
     private final String result;
 
-    public GameEndEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData, String result)
-    {
+    public GameEndEvent(AnnouncerNotificationType announcerNotificationType,
+                        Double announcerEventTime,
+                        Long announcerEventID,
+                        AllGameData allGameData,
+                        String result) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;
@@ -41,8 +43,7 @@ public class GameEndEvent implements AnnouncerNotificationEvent
         return this.allGameData;
     }
 
-    public String getResult()
-    {
+    public String getResult() {
         return this.result;
     }
 }

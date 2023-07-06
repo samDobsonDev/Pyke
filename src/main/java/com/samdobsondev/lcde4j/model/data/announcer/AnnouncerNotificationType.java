@@ -2,8 +2,7 @@ package com.samdobsondev.lcde4j.model.data.announcer;
 
 import com.google.gson.annotations.SerializedName;
 
-public enum AnnouncerNotificationType
-{
+public enum AnnouncerNotificationType {
     @SerializedName("Ace")
     ACE,
     @SerializedName("BaronKill")

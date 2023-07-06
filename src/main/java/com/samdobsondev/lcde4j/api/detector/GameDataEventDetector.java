@@ -7,8 +7,7 @@ import com.samdobsondev.lcde4j.model.events.gamedata.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameDataEventDetector
-{
+public class GameDataEventDetector {
     public List<GameDataEvent> detectEvents(AllGameData currentAllGameData, AllGameData incomingAllGameData, Double eventTime) {
         GameData current = currentAllGameData.getGameData();
         GameData incoming = incomingAllGameData.getGameData();

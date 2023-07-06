@@ -3,16 +3,18 @@ package com.samdobsondev.lcde4j.model.events.announcer;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
-public class InhibitorRespawnEvent implements AnnouncerNotificationEvent
-{
+public class InhibitorRespawnEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
     private final AllGameData allGameData;
     private final String inhibitorRespawned;
 
-    public InhibitorRespawnEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData, String inhibitorRespawned)
-    {
+    public InhibitorRespawnEvent(AnnouncerNotificationType announcerNotificationType,
+                                 Double announcerEventTime,
+                                 Long announcerEventID,
+                                 AllGameData allGameData,
+                                 String inhibitorRespawned) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;
@@ -40,8 +42,7 @@ public class InhibitorRespawnEvent implements AnnouncerNotificationEvent
         return this.allGameData;
     }
 
-    public String getInhibitorRespawned()
-    {
+    public String getInhibitorRespawned() {
         return this.inhibitorRespawned;
     }
 }

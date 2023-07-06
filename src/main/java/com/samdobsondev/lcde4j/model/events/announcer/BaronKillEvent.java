@@ -5,8 +5,7 @@ import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
 import java.util.List;
 
-public class BaronKillEvent implements AnnouncerNotificationEvent
-{
+public class BaronKillEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
@@ -15,7 +14,13 @@ public class BaronKillEvent implements AnnouncerNotificationEvent
     private final String killerName;
     private final List<String> assisters;
 
-    public BaronKillEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData, Boolean stolen, String killerName, List<String> assisters) {
+    public BaronKillEvent(AnnouncerNotificationType announcerNotificationType,
+                          Double announcerEventTime,
+                          Long announcerEventID,
+                          AllGameData allGameData,
+                          Boolean stolen,
+                          String killerName,
+                          List<String> assisters) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;
@@ -45,18 +50,15 @@ public class BaronKillEvent implements AnnouncerNotificationEvent
         return this.allGameData;
     }
 
-    public Boolean getStolen()
-    {
+    public Boolean getStolen() {
         return this.stolen;
     }
 
-    public String getKillerName()
-    {
+    public String getKillerName() {
         return this.killerName;
     }
 
-    public List<String> getAssisters()
-    {
+    public List<String> getAssisters() {
         return this.assisters;
     }
 }

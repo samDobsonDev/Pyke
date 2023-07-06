@@ -3,15 +3,16 @@ package com.samdobsondev.lcde4j.model.events.announcer;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
-public class GameStartEvent implements AnnouncerNotificationEvent
-{
+public class GameStartEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
     private final AllGameData allGameData;
 
-    public GameStartEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData)
-    {
+    public GameStartEvent(AnnouncerNotificationType announcerNotificationType,
+                          Double announcerEventTime,
+                          Long announcerEventID,
+                          AllGameData allGameData) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;

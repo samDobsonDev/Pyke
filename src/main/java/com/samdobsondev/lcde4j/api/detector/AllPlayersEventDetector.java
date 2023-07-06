@@ -1,12 +1,8 @@
 package com.samdobsondev.lcde4j.api.detector;
 
 import com.samdobsondev.lcde4j.model.data.AllGameData;
-import com.samdobsondev.lcde4j.model.data.allplayers.Item;
-import com.samdobsondev.lcde4j.model.data.allplayers.Player;
-import com.samdobsondev.lcde4j.model.data.allplayers.Scores;
-import com.samdobsondev.lcde4j.model.data.allplayers.SummonerSpells;
-import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
-import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEventType;
+import com.samdobsondev.lcde4j.model.data.allplayers.*;
+import com.samdobsondev.lcde4j.model.events.allplayers.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,62 +49,63 @@ public class AllPlayersEventDetector
         if (incoming.size() > current.size()) {
             List<Player> newPlayers = incoming.subList(current.size(), incoming.size());
             for (Player player : newPlayers) {
-                AllPlayersEvent event = new AllPlayersEvent();
-                event.setAllPlayersEventType(AllPlayersEventType.PLAYER_JOINED);
-                event.setAllPlayersEventTime(eventTime);
-                event.setAllGameData(incomingAllGameData);
-                event.setPlayer(player);
 
-                // Utilizing Optional to avoid NullPointerExceptions (such as when adding Target Dummies to the game)
-                Optional.ofNullable(player.getChampionName()).ifPresent(event::setChampionName);
-                Optional.ofNullable(player.getIsBot()).ifPresent(event::setIsBot);
-                Optional.ofNullable(player.getPosition()).ifPresent(event::setPosition);
-                Optional.ofNullable(player.getRawChampionName()).ifPresent(event::setRawChampionName);
+                // Use optional to handle null cases (such as when Target Dummies are in the game
+                Runes runes = Optional.ofNullable(player.getRunes()).orElse(new Runes());
+                SummonerSpells summonerSpells = Optional.ofNullable(player.getSummonerSpells()).orElse(new SummonerSpells());
 
-                Optional.ofNullable(player.getRunes()).ifPresent(runes -> {
-                    Optional.ofNullable(runes.getKeystone()).ifPresent(event::setKeystone);
-                    Optional.ofNullable(runes.getPrimaryRuneTree()).ifPresent(event::setPrimaryRuneTree);
-                    Optional.ofNullable(runes.getSecondaryRuneTree()).ifPresent(event::setSecondaryRuneTree);
-                });
-
-                Optional.ofNullable(player.getSkinID()).ifPresent(event::setSkinID);
-                Optional.ofNullable(player.getSummonerName()).ifPresent(event::setSummonerName);
-
-                Optional.ofNullable(player.getSummonerSpells()).ifPresent(spells -> {
-                    Optional.ofNullable(spells.getSummonerSpellOne()).ifPresent(event::setSummonerSpellOne);
-                    Optional.ofNullable(spells.getSummonerSpellTwo()).ifPresent(event::setSummonerSpellTwo);
-                });
-
-                Optional.ofNullable(player.getTeam()).ifPresent(event::setTeam);
+                PlayerJoinedEvent event = new PlayerJoinedEvent(AllPlayersEventType.PLAYER_JOINED,
+                        eventTime,
+                        incomingAllGameData,
+                        player,
+                        player.getChampionName(),
+                        player.getIsBot(),
+                        player.getPosition(),
+                        player.getRawChampionName(),
+                        runes.getKeystone(),
+                        runes.getPrimaryRuneTree(),
+                        runes.getSecondaryRuneTree(),
+                        player.getSkinID(),
+                        player.getSummonerName(),
+                        summonerSpells.getSummonerSpellOne(),
+                        summonerSpells.getSummonerSpellTwo(),
+                        player.getTeam()
+                );
 
                 events.add(event);
             }
         }
     }
 
+
     private void checkDeadAliveChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
         boolean currentPlayerIsDead = Boolean.TRUE.equals(currentPlayer.getIsDead());
         boolean incomingPlayerIsDead = Boolean.TRUE.equals(incomingPlayer.getIsDead());
 
         if (!currentPlayerIsDead && incomingPlayerIsDead || currentPlayerIsDead && !incomingPlayerIsDead) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setIsDead(incomingPlayer.getIsDead());
-            event.setSummonerName(incomingPlayer.getSummonerName());
-            event.setDeaths(incomingPlayer.getScores().getDeaths());
-
             if (!currentPlayerIsDead) {
                 // Player has died
-                event.setAllPlayersEventType(AllPlayersEventType.DEATH);
+                DeathEvent event = new DeathEvent(AllPlayersEventType.DEATH,
+                        eventTime,
+                        incomingAllGameData,
+                        incomingPlayer,
+                        incomingPlayer.getChampionName(),
+                        incomingPlayer.getIsDead(),
+                        incomingPlayer.getSummonerName(),
+                        incomingPlayer.getScores().getDeaths());
+                events.add(event);
             } else {
                 // Player has respawned
-                event.setAllPlayersEventType(AllPlayersEventType.RESPAWN);
+                RespawnEvent event = new RespawnEvent(AllPlayersEventType.RESPAWN,
+                        eventTime,
+                        incomingAllGameData,
+                        incomingPlayer,
+                        incomingPlayer.getChampionName(),
+                        incomingPlayer.getIsDead(),
+                        incomingPlayer.getSummonerName(),
+                        incomingPlayer.getScores().getDeaths());
+                events.add(event);
             }
-
-            events.add(event);
         }
     }
 
@@ -156,9 +153,15 @@ public class AllPlayersEventDetector
 
                     // If the item is not null, generate the event
                     if (acquiredItem != null) {
-                        AllPlayersEvent event = new AllPlayersEvent();
-                        event.setAllPlayersEventType(AllPlayersEventType.ITEM_ACQUIRED);
-                        generateItemAcquiredEvent(events, incomingPlayer, incomingAllGameData, eventTime, acquiredItem, event);
+                        ItemAcquiredEvent event = new ItemAcquiredEvent(AllPlayersEventType.ITEM_ACQUIRED,
+                                eventTime,
+                                incomingAllGameData,
+                                incomingPlayer,
+                                incomingPlayer.getChampionName(),
+                                acquiredItem,
+                                incomingPlayer.getSummonerName()
+                                );
+                        events.add(event);
                     }
                 }
             }
@@ -182,9 +185,15 @@ public class AllPlayersEventDetector
 
                     // If the item is not null, generate the event
                     if (soldItem != null) {
-                        AllPlayersEvent event = new AllPlayersEvent();
-                        event.setAllPlayersEventType(AllPlayersEventType.ITEM_SOLD_OR_CONSUMED);
-                        generateItemSoldEvent(events, incomingPlayer, incomingAllGameData, eventTime, soldItem, event);
+                        ItemSoldOrConsumedEvent event = new ItemSoldOrConsumedEvent(AllPlayersEventType.ITEM_SOLD_OR_CONSUMED,
+                                eventTime,
+                                incomingAllGameData,
+                                incomingPlayer,
+                                incomingPlayer.getChampionName(),
+                                soldItem,
+                                incomingPlayer.getSummonerName()
+                        );
+                        events.add(event);
                     }
                 }
             }
@@ -196,28 +205,6 @@ public class AllPlayersEventDetector
         return items.stream().collect(Collectors.groupingBy(Item::getItemID, Collectors.counting()));
     }
 
-    private void generateItemAcquiredEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item item, AllPlayersEvent event)
-    {
-        event.setAllPlayersEventTime(eventTime);
-        event.setAllGameData(incomingAllGameData);
-        event.setPlayer(incomingPlayer);
-        event.setChampionName(incomingPlayer.getChampionName());
-        event.setAcquiredItem(item);
-        event.setSummonerName(incomingPlayer.getSummonerName());
-        events.add(event);
-    }
-
-    private void generateItemSoldEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item item, AllPlayersEvent event)
-    {
-        event.setAllPlayersEventTime(eventTime);
-        event.setAllGameData(incomingAllGameData);
-        event.setPlayer(incomingPlayer);
-        event.setChampionName(incomingPlayer.getChampionName());
-        event.setSoldOrConsumedItem(item);
-        event.setSummonerName(incomingPlayer.getSummonerName());
-        events.add(event);
-    }
-
     private void detectSlotChanges(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, List<Item> currentItems, List<Item> incomingItems) {
 
         if (containsSameItems(currentItems, incomingItems)) {
@@ -227,16 +214,15 @@ public class AllPlayersEventDetector
 
                 // If the item is the same but the slot has changed
                 if (currentItem.getItemID().equals(incomingItem.getItemID()) && !currentItem.getSlot().equals(incomingItem.getSlot())) {
-                    AllPlayersEvent event = new AllPlayersEvent();
-                    event.setAllPlayersEventType(AllPlayersEventType.ITEM_SLOT_CHANGE);
-                    event.setAllPlayersEventTime(eventTime);
-                    event.setAllGameData(incomingAllGameData);
-                    event.setPlayer(incomingPlayer);
-                    event.setChampionName(incomingPlayer.getChampionName());
-                    event.setItem(incomingItem);
-                    event.setOldItemSlot(currentItem.getSlot());
-                    event.setNewItemSlot(incomingItem.getSlot());
-                    event.setSummonerName(incomingPlayer.getSummonerName());
+                    ItemSlotChangeEvent event = new ItemSlotChangeEvent(AllPlayersEventType.ITEM_SLOT_CHANGE,
+                            eventTime,
+                            incomingAllGameData,
+                            incomingPlayer,
+                            incomingPlayer.getChampionName(),
+                            incomingItem,
+                            currentItem.getSlot(),
+                            incomingItem.getSlot(),
+                            incomingPlayer.getSummonerName());
                     events.add(event);
                 }
             }
@@ -275,9 +261,15 @@ public class AllPlayersEventDetector
             // Check if the incoming item is the next item in the transformation sequence
             if (nextItemInTransformation.equals(incomingItem.getItemID())) {
                 // The item has transformed
-                AllPlayersEvent event = new AllPlayersEvent();
-                event.setAllPlayersEventType(AllPlayersEventType.ITEM_TRANSFORMATION);
-                generateItemTransformationEvent(events, incomingPlayer, incomingAllGameData, eventTime, currentItem, incomingItem, event);
+                ItemTransformationEvent event = new ItemTransformationEvent(AllPlayersEventType.ITEM_TRANSFORMATION,
+                        eventTime,
+                        incomingAllGameData,
+                        incomingPlayer,
+                        incomingPlayer.getChampionName(),
+                        currentItem,
+                        incomingItem,
+                        incomingPlayer.getSummonerName());
+                events.add(event);
             }
         }
     }
@@ -331,56 +323,41 @@ public class AllPlayersEventDetector
         return transformations;
     }
 
-    private void generateItemTransformationEvent(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item oldItem, Item newItem, AllPlayersEvent event)
-    {
-        event.setAllPlayersEventTime(eventTime);
-        event.setAllGameData(incomingAllGameData);
-        event.setPlayer(incomingPlayer);
-        event.setChampionName(incomingPlayer.getChampionName());
-        event.setOldItem(oldItem);
-        event.setNewItem(newItem);
-        event.setSummonerName(incomingPlayer.getSummonerName());
-        events.add(event);
-    }
-
     private void detectHeraldUsage(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, Item currentItem, Item incomingItem) {
         // If the player was holding the Eye of Herald and is no longer holding it, an EYE_OF_HERALD_USED_OR_LOST event has occurred
         if (currentItem.getItemID() == 3513L && incomingItem.getItemID() != 3513L) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.EYE_OF_HERALD_USED_OR_LOST);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            EyeOfHeraldUsedOrLostEvent event = new EyeOfHeraldUsedOrLostEvent(AllPlayersEventType.EYE_OF_HERALD_USED_OR_LOST,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
     }
 
     private void checkForLevelChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
         if (!currentPlayer.getLevel().equals(incomingPlayer.getLevel())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.LEVEL_UP);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setLevel(incomingPlayer.getLevel());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            LevelUpEvent event = new LevelUpEvent(AllPlayersEventType.LEVEL_UP,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingPlayer.getLevel(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
     }
 
     private void checkForRespawnTimerChanges(List<AllPlayersEvent> events, Player currentPlayer, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime) {
         if (!incomingPlayer.getRespawnTimer().equals(currentPlayer.getRespawnTimer())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.RESPAWN_TIMER_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setRespawnTimer(incomingPlayer.getRespawnTimer());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            RespawnTimerChangeEvent event = new RespawnTimerChangeEvent(AllPlayersEventType.RESPAWN_TIMER_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingPlayer.getRespawnTimer(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
     }
@@ -390,63 +367,60 @@ public class AllPlayersEventDetector
         Scores incomingScores = incomingPlayer.getScores();
 
         if (!currentScores.getAssists().equals(incomingScores.getAssists())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.ASSISTS_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setAssists(incomingScores.getAssists());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            AssistsChangeEvent event = new AssistsChangeEvent(AllPlayersEventType.ASSISTS_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingScores.getAssists(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
 
         // The CS score is updated every 10 CS, rather than every CS
         if (!currentScores.getCreepScore().equals(incomingScores.getCreepScore())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.CS_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setCreepScore(incomingScores.getCreepScore());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            CreepScoreChangeEvent event = new CreepScoreChangeEvent(AllPlayersEventType.CS_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingScores.getCreepScore(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
 
         if (!currentScores.getDeaths().equals(incomingScores.getDeaths())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.DEATHS_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setDeaths(incomingScores.getDeaths());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+            DeathsChangeEvent event = new DeathsChangeEvent(AllPlayersEventType.DEATHS_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingScores.getDeaths(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
 
         if (!currentScores.getKills().equals(incomingScores.getKills())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.KILLS_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setKills(incomingScores.getKills());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+
+            KillsChangeEvent event = new KillsChangeEvent(AllPlayersEventType.KILLS_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingScores.getKills(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
 
         if (!currentScores.getWardScore().equals(incomingScores.getWardScore())) {
-            AllPlayersEvent event = new AllPlayersEvent();
-            event.setAllPlayersEventType(AllPlayersEventType.VISION_SCORE_CHANGE);
-            event.setAllPlayersEventTime(eventTime);
-            event.setAllGameData(incomingAllGameData);
-            event.setPlayer(incomingPlayer);
-            event.setChampionName(incomingPlayer.getChampionName());
-            event.setWardScore(incomingScores.getWardScore());
-            event.setSummonerName(incomingPlayer.getSummonerName());
+
+            VisionScoreChangeEvent event = new VisionScoreChangeEvent(AllPlayersEventType.VISION_SCORE_CHANGE,
+                    eventTime,
+                    incomingAllGameData,
+                    incomingPlayer,
+                    incomingPlayer.getChampionName(),
+                    incomingScores.getWardScore(),
+                    incomingPlayer.getSummonerName());
             events.add(event);
         }
     }
@@ -460,13 +434,14 @@ public class AllPlayersEventDetector
             Optional.ofNullable(current.getSummonerSpellOne()).ifPresent(currentSpellOne -> {
                 Optional.ofNullable(incoming.getSummonerSpellOne()).ifPresent(incomingSpellOne -> {
                     if (!currentSpellOne.equals(incomingSpellOne)) {
-                        AllPlayersEvent event = new AllPlayersEvent();
-                        event.setAllPlayersEventType(AllPlayersEventType.SUMMONER_SPELL_ONE_CHANGE);
-                        event.setAllPlayersEventTime(eventTime);
-                        event.setAllGameData(incomingAllGameData);
-                        event.setPlayer(incomingPlayer);
-                        event.setChampionName(incomingPlayer.getChampionName());
-                        event.setSummonerName(incomingPlayer.getSummonerName());
+                        SummonerSpellOneChangeEvent event = new SummonerSpellOneChangeEvent(AllPlayersEventType.SUMMONER_SPELL_ONE_CHANGE,
+                                eventTime,
+                                incomingAllGameData,
+                                incomingPlayer,
+                                incomingPlayer.getChampionName(),
+                                currentSpellOne,
+                                incomingSpellOne,
+                                incomingPlayer.getSummonerName());
                         events.add(event);
                     }
                 });
@@ -474,13 +449,14 @@ public class AllPlayersEventDetector
 
             Optional.ofNullable(current.getSummonerSpellTwo()).ifPresent(currentSpellTwo -> Optional.ofNullable(incoming.getSummonerSpellTwo()).ifPresent(incomingSpellTwo -> {
                 if (!currentSpellTwo.equals(incomingSpellTwo)) {
-                    AllPlayersEvent event = new AllPlayersEvent();
-                    event.setAllPlayersEventType(AllPlayersEventType.SUMMONER_SPELL_TWO_CHANGE);
-                    event.setAllPlayersEventTime(eventTime);
-                    event.setAllGameData(incomingAllGameData);
-                    event.setPlayer(incomingPlayer);
-                    event.setChampionName(incomingPlayer.getChampionName());
-                    event.setSummonerName(incomingPlayer.getSummonerName());
+                    SummonerSpellTwoChangeEvent event = new SummonerSpellTwoChangeEvent(AllPlayersEventType.SUMMONER_SPELL_TWO_CHANGE,
+                            eventTime,
+                            incomingAllGameData,
+                            incomingPlayer,
+                            incomingPlayer.getChampionName(),
+                            currentSpellTwo,
+                            incomingSpellTwo,
+                            incomingPlayer.getSummonerName());
                     events.add(event);
                 }
             }));

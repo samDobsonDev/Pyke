@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.events.announcer;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.data.announcer.AnnouncerNotificationType;
 
-public class MultikillEvent implements AnnouncerNotificationEvent
-{
+public class MultikillEvent implements AnnouncerNotificationEvent {
     private final AnnouncerNotificationType announcerNotificationType;
     private final Double announcerEventTime;
     private final Long announcerEventID;
@@ -12,8 +11,12 @@ public class MultikillEvent implements AnnouncerNotificationEvent
     private final String killerName;
     private final Long killstreak;
 
-    public MultikillEvent(AnnouncerNotificationType announcerNotificationType, Double announcerEventTime, Long announcerEventID, AllGameData allGameData, String killerName, Long killstreak)
-    {
+    public MultikillEvent(AnnouncerNotificationType announcerNotificationType,
+                          Double announcerEventTime,
+                          Long announcerEventID,
+                          AllGameData allGameData,
+                          String killerName,
+                          Long killstreak) {
         this.announcerNotificationType = announcerNotificationType;
         this.announcerEventTime = announcerEventTime;
         this.announcerEventID = announcerEventID;
@@ -42,13 +45,11 @@ public class MultikillEvent implements AnnouncerNotificationEvent
         return this.allGameData;
     }
 
-    public String getKillerName()
-    {
+    public String getKillerName() {
         return this.killerName;
     }
 
-    public Long getKillstreak()
-    {
+    public Long getKillstreak() {
         return this.killstreak;
     }
 }

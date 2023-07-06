@@ -6,8 +6,7 @@ import com.samdobsondev.lcde4j.model.data.activeplayer.fullrunes.FullRunes;
 import lombok.Data;
 
 @Data
-public class ActivePlayer
-{
+public class ActivePlayer {
     private Abilities abilities;
     private ChampionStats championStats;
     private Double currentGold;

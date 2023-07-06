@@ -6,6 +6,7 @@ import com.samdobsondev.lcde4j.api.detector.ActivePlayerEventDetector;
 import com.samdobsondev.lcde4j.api.detector.AllPlayersEventDetector;
 import com.samdobsondev.lcde4j.api.detector.AnnouncerNotificationEventDetector;
 import com.samdobsondev.lcde4j.api.detector.GameDataEventDetector;
+import com.samdobsondev.lcde4j.api.listener.AllPlayersEventListener;
 import com.samdobsondev.lcde4j.api.listener.AnnouncerNotificationEventListener;
 import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
 import com.samdobsondev.lcde4j.api.watcher.PortWatcher;
@@ -13,7 +14,7 @@ import com.samdobsondev.lcde4j.exception.BaselineResponseException;
 import com.samdobsondev.lcde4j.exception.SSLContextCreationException;
 import com.samdobsondev.lcde4j.model.data.AllGameData;
 import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerEvent;
-import com.samdobsondev.lcde4j.model.events.allplayers.AllPlayersEvent;
+import com.samdobsondev.lcde4j.model.events.allplayers.*;
 import com.samdobsondev.lcde4j.model.events.announcer.*;
 import com.samdobsondev.lcde4j.model.events.gamedata.*;
 
@@ -48,8 +49,9 @@ public class LCDE4J
     private final AtomicBoolean isPolling = new AtomicBoolean(false);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> pollingTask;
-    private final List<GameDataEventListener> gameDataEventListeners = new ArrayList<>();
+    private final List<AllPlayersEventListener> allPlayersEventListeners = new ArrayList<>();
     private final List<AnnouncerNotificationEventListener> announcerNotificationEventListeners = new ArrayList<>();
+    private final List<GameDataEventListener> gameDataEventListeners = new ArrayList<>();
 
     public LCDE4J() {
         this(isPortUp -> {});
@@ -165,14 +167,86 @@ public class LCDE4J
     }
 
     private void processAllPlayerEvents(List<AllPlayersEvent> allPlayersEvents) {
-
+        for (AllPlayersEvent allPlayersEvent : allPlayersEvents) {
+            for (AllPlayersEventListener listener : allPlayersEventListeners) {
+                switch (allPlayersEvent.getAllPlayersEventType()) {
+                    case ASSISTS_CHANGE -> {
+                        assert allPlayersEvent instanceof AssistsChangeEvent;
+                        listener.onAssistsChange((AssistsChangeEvent) allPlayersEvent);
+                    }
+                    case CS_CHANGE -> {
+                        assert allPlayersEvent instanceof CreepScoreChangeEvent;
+                        listener.onCreepScoreChange((CreepScoreChangeEvent) allPlayersEvent);
+                    }
+                    case DEATH -> {
+                        assert allPlayersEvent instanceof DeathEvent;
+                        listener.onDeath((DeathEvent) allPlayersEvent);
+                    }
+                    case DEATHS_CHANGE -> {
+                        assert allPlayersEvent instanceof DeathsChangeEvent;
+                        listener.onDeathsChange((DeathsChangeEvent) allPlayersEvent);
+                    }
+                    case EYE_OF_HERALD_USED_OR_LOST -> {
+                        assert allPlayersEvent instanceof EyeOfHeraldUsedOrLostEvent;
+                        listener.onEyeOfHeraldUsedOrLost((EyeOfHeraldUsedOrLostEvent) allPlayersEvent);
+                    }
+                    case ITEM_ACQUIRED -> {
+                        assert allPlayersEvent instanceof ItemAcquiredEvent;
+                        listener.onItemAcquired((ItemAcquiredEvent) allPlayersEvent);
+                    }
+                    case ITEM_SLOT_CHANGE -> {
+                        assert allPlayersEvent instanceof ItemSlotChangeEvent;
+                        listener.onItemSlotChange((ItemSlotChangeEvent) allPlayersEvent);
+                    }
+                    case ITEM_SOLD_OR_CONSUMED -> {
+                        assert allPlayersEvent instanceof ItemSoldOrConsumedEvent;
+                        listener.onItemSoldOrConsumed((ItemSoldOrConsumedEvent) allPlayersEvent);
+                    }
+                    case ITEM_TRANSFORMATION -> {
+                        assert allPlayersEvent instanceof ItemTransformationEvent;
+                        listener.onItemTransformation((ItemTransformationEvent) allPlayersEvent);
+                    }
+                    case KILLS_CHANGE -> {
+                        assert allPlayersEvent instanceof KillsChangeEvent;
+                        listener.onKillsChange((KillsChangeEvent) allPlayersEvent);
+                    }
+                    case LEVEL_UP -> {
+                        assert allPlayersEvent instanceof LevelUpEvent;
+                        listener.onLevelUp((LevelUpEvent) allPlayersEvent);
+                    }
+                    case PLAYER_JOINED -> {
+                        assert allPlayersEvent instanceof PlayerJoinedEvent;
+                        listener.onPlayerJoined((PlayerJoinedEvent) allPlayersEvent);
+                    }
+                    case RESPAWN -> {
+                        assert allPlayersEvent instanceof RespawnEvent;
+                        listener.onRespawn((RespawnEvent) allPlayersEvent);
+                    }
+                    case RESPAWN_TIMER_CHANGE -> {
+                        assert allPlayersEvent instanceof RespawnTimerChangeEvent;
+                        listener.onRespawnTimerChange((RespawnTimerChangeEvent) allPlayersEvent);
+                    }
+                    case SUMMONER_SPELL_ONE_CHANGE -> {
+                        assert allPlayersEvent instanceof SummonerSpellOneChangeEvent;
+                        listener.onSummonerSpellOneChange((SummonerSpellOneChangeEvent) allPlayersEvent);
+                    }
+                    case SUMMONER_SPELL_TWO_CHANGE -> {
+                        assert allPlayersEvent instanceof SummonerSpellTwoChangeEvent;
+                        listener.onSummonerSpellTwoChange((SummonerSpellTwoChangeEvent) allPlayersEvent);
+                    }
+                    case VISION_SCORE_CHANGE -> {
+                        assert allPlayersEvent instanceof VisionScoreChangeEvent;
+                        listener.onVisionScoreChange((VisionScoreChangeEvent) allPlayersEvent);
+                    }
+                }
+            }
+        }
     }
 
     private void processAnnouncerNotificationEvents(List<AnnouncerNotificationEvent> announcerNotificationEvents) {
         for (AnnouncerNotificationEvent announcerNotificationEvent : announcerNotificationEvents) {
             for (AnnouncerNotificationEventListener listener : announcerNotificationEventListeners) {
-                switch (announcerNotificationEvent.getAnnouncerNotificationEventType())
-                {
+                switch (announcerNotificationEvent.getAnnouncerNotificationEventType()) {
                     case ACE ->
                     {
                         assert announcerNotificationEvent instanceof AceEvent;
@@ -384,5 +458,9 @@ public class LCDE4J
 
     public void registerAnnouncerNotificationEventListener(AnnouncerNotificationEventListener listener) {
         announcerNotificationEventListeners.add(listener);
+    }
+
+    public void registerAllPlayersEventListener(AllPlayersEventListener listener) {
+        allPlayersEventListeners.add(listener);
     }
 }

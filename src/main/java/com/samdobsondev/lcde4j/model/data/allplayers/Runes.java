@@ -5,8 +5,7 @@ import com.samdobsondev.lcde4j.model.data.common.RuneTree;
 import lombok.Data;
 
 @Data
-public class Runes
-{
+public class Runes {
     private Rune keystone;
     private RuneTree primaryRuneTree;
     private RuneTree secondaryRuneTree;

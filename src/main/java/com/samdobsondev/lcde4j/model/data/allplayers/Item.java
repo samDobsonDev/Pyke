@@ -3,8 +3,7 @@ package com.samdobsondev.lcde4j.model.data.allplayers;
 import lombok.Data;
 
 @Data
-public class Item
-{
+public class Item {
     private Boolean canUse;
     private Boolean consumable;
     private Long count;

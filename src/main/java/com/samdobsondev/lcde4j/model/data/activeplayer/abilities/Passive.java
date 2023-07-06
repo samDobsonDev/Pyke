@@ -1,7 +1,9 @@
 package com.samdobsondev.lcde4j.model.data.activeplayer.abilities;
 
-public class Passive
-{
+import lombok.Data;
+
+@Data
+public class Passive {
     private String displayName;
     private String id;
     private String rawDescription;

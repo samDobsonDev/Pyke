@@ -4,8 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
-public class Abilities
-{
+public class Abilities {
     @SerializedName("E")
     private Ability e;
     @SerializedName("Passive")

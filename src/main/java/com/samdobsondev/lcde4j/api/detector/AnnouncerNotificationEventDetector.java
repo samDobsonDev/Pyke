@@ -9,8 +9,7 @@ import com.samdobsondev.lcde4j.model.events.announcer.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnnouncerNotificationEventDetector
-{
+public class AnnouncerNotificationEventDetector {
     public List<AnnouncerNotificationEvent> detectEvents(AllGameData currentAllGameData, AllGameData incomingAllGameData) {
         AnnouncerNotifications current = currentAllGameData.getAnnouncerNotifications();
         AnnouncerNotifications incoming = incomingAllGameData.getAnnouncerNotifications();
@@ -75,7 +74,6 @@ public class AnnouncerNotificationEventDetector
                 }
             }
         }
-
         return events;
     }
 }
