@@ -18,6 +18,8 @@ import com.samdobsondev.lcde4j.model.events.activeplayer.*;
 import com.samdobsondev.lcde4j.model.events.allplayers.*;
 import com.samdobsondev.lcde4j.model.events.announcer.*;
 import com.samdobsondev.lcde4j.model.events.gamedata.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -49,6 +51,7 @@ public class LCDE4J {
     private final AtomicBoolean isPolling = new AtomicBoolean(false);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> pollingTask;
+    private static final Logger logger = LoggerFactory.getLogger(LCDE4J.class);
     private final List<ActivePlayerEventListener> activePlayerEventListeners = new ArrayList<>();
     private final List<AllPlayersEventListener> allPlayersEventListeners = new ArrayList<>();
     private final List<AnnouncerNotificationEventListener> announcerNotificationEventListeners = new ArrayList<>();
@@ -89,15 +92,12 @@ public class LCDE4J {
 
     public boolean checkPort() {
         boolean isPortUp = this.portWatcher.isPortUp();
-
-        // TODO: Replace all instance of System.out with a logger
-
         if (previousPortStatus == null || isPortUp != previousPortStatus) {
             if (isPortUp) {
-                System.out.println("API Online, loading...");
+                logger.info("API Online, loading...");
                 startPolling();
             } else {
-                System.out.println("API Offline, start an active game instance...");
+                logger.info("API Offline, start an active game instance...");
                 stopPolling();
             }
             previousPortStatus = isPortUp;
@@ -116,20 +116,20 @@ public class LCDE4J {
             try {
                 ApiResponse<AllGameData> apiResponse = requestLiveData("/liveclientdata/allgamedata", AllGameData.class);
                 if (apiResponse == null || apiResponse.statusCode() == 404) {
-                    System.out.println("loading...");
+                    logger.info("loading...");
                 } else {
                     AllGameData incomingResponse = apiResponse.responseObject();
 
                     // TODO: Fix bug where activePlayer.getAbilities(getQ) in the first incomingResponse is sometimes null
 
-                    // Process all the events that have occurred in this response
+                    // Dispatches all events that have occurred to the relevant listeners
                     processEvents(currentResponse.get(), incomingResponse);
 
                     // Update currentResponse to incomingResponse for the next poll
                     currentResponse.set(incomingResponse);
                 }
             } catch (ConnectException e) { // it is possible (but-rare) that the port can go down mid-poll, such as when the game ends or crashes, so we catch that here
-                System.out.println("API connection lost during active polling. Polling process will be terminated until connection is re-established...");
+                logger.error("API connection lost during active polling. Polling process will be terminated until connection is re-established...");
                 stopPolling();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -144,6 +144,18 @@ public class LCDE4J {
         } catch (IOException e) {
             throw new BaselineResponseException("Failed to load baseline response", e);
         }
+    }
+
+    private void stopPolling() {
+        isPolling.set(false);
+        if (pollingTask != null) {
+            pollingTask.cancel(false);
+        }
+    }
+
+    public void stop() {
+        portWatcherStarted.set(false);
+        scheduler.shutdown();
     }
 
     private void processEvents(AllGameData currentResponse, AllGameData incomingResponse) {
@@ -417,18 +429,6 @@ public class LCDE4J {
                 }
             }
         }
-    }
-
-    private void stopPolling() {
-        isPolling.set(false);
-        if (pollingTask != null) {
-            pollingTask.cancel(false);
-        }
-    }
-
-    public void stop() {
-        portWatcherStarted.set(false);
-        scheduler.shutdown();
     }
 
     private SSLContext createSSLContext() throws SSLContextCreationException {

@@ -14,11 +14,16 @@ import com.samdobsondev.lcde4j.model.events.gamedata.MapTerrainChangeEvent;
 public class Example {
     public static void main(String[] args) {
         LCDE4J lcde4J = new LCDE4J();
-        lcde4J.start();
+        lcde4J.start(); // starts the port watching and subsequent polling
+
         lcde4J.registerActivePlayerEventListener(new ActivePlayerEventListener() {
             @Override
             public void onLevelUp(ActivePlayerLevelUpEvent event) {
-                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " levelled up to level " + event.getLevel());
+                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " leveled up to level " + event.getLevel());
+
+                if (event.getLevel() >= 16) {
+                    lcde4J.stop(); // stops the polling and port watching
+                }
             }
         });
 
