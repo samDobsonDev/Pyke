@@ -8,6 +8,7 @@ import com.samdobsondev.lcde4j.api.listener.GameDataEventListener;
 import com.samdobsondev.lcde4j.model.events.activeplayer.ActivePlayerLevelUpEvent;
 import com.samdobsondev.lcde4j.model.events.allplayers.*;
 import com.samdobsondev.lcde4j.model.events.announcer.FirstBloodEvent;
+import com.samdobsondev.lcde4j.model.events.announcer.GameEndEvent;
 import com.samdobsondev.lcde4j.model.events.announcer.MinionsSpawningEvent;
 import com.samdobsondev.lcde4j.model.events.gamedata.MapTerrainChangeEvent;
 
@@ -63,6 +64,11 @@ public class Example {
             @Override
             public void onFirstBlood(FirstBloodEvent event) {
                 System.out.println(event.getRecipient() + " got first blood!");
+            }
+
+            @Override
+            public void onGameEnd(GameEndEvent event) {
+                lcde4J.stop();
             }
         });
 
