@@ -5,26 +5,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <repositories>
-        <repository>
-            <id>central</id>
-            <name>Maven Central</name>
-            <layout>default</layout>
-            <url>https://repo1.maven.org/maven2/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
+    <!--TODO: Add licence-->
+    <!--TODO: Add build section-->
 
     <groupId>com.samdobsondev.pyke</groupId>
     <artifactId>pyke</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>Pyke</name>
+    <description>Pyke is a Java library for native desktop applications designed to "hook" and process real-time game events from League of Legends matches!</description>
+    <url>https://github.com/samDobsonDev/Pyke</url>
 
     <properties>
         <java.version>17</java.version>
@@ -32,6 +21,14 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <scm>
+        <url>https://github.com/samDobsonDev/Pyke/</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/samDobsonDev/Pyke/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
 
     <dependencies>
         <dependency>
@@ -59,11 +56,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.4.8</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
