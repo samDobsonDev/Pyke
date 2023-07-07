@@ -16,8 +16,8 @@ import com.samdobsondev.pyke.model.events.gamedata.MapTerrainChangeEvent;
 
 public class Example {
     public static void main(String[] args) {
+
         Pyke pyke = new Pyke();
-        pyke.start(); // starts the port watching and subsequent polling
 
         pyke.registerActivePlayerEventListener(new ActivePlayerEventListener() {
             @Override
@@ -90,6 +90,8 @@ public class Example {
                 System.out.println("Map Terrain has changed to: " + event.getMapTerrain());
             }
         });
+
+        pyke.start(); // starts the port watching and subsequent polling
     }
 }
 

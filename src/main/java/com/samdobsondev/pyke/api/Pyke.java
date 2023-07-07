@@ -65,7 +65,7 @@ public class Pyke {
     public Pyke(Consumer<Boolean> onPortStatusChange) {
         try {
             this.sslContext = createSSLContext();
-            logger.info("SSL context created successfully.");
+            logger.info("SSL context created successfully");
         } catch (Exception e) {
             logger.error("Failed to create SSL context", e);
             throw new SSLContextCreationFailedException("Failed to create SSL context", e);
@@ -129,12 +129,12 @@ public class Pyke {
                     try {
                         Thread.sleep(100); // we check the status of the port every 100 milliseconds
                     } catch (InterruptedException ignored) {
-                        logger.warn("Interrupted while waiting to check port status.");
+                        logger.warn("Interrupted while waiting to check port status");
                     }
                 }
             }
         }).start();
-        logger.info("Port watcher service started.");
+        logger.info("Port watcher service started");
     }
 
     public boolean checkPort() {
@@ -191,7 +191,7 @@ public class Pyke {
         try (InputStream is = getClass().getResourceAsStream("/baselineResponse.json")) {
             assert is != null;
             AllGameData data = GSON.fromJson(new InputStreamReader(is), AllGameData.class);
-            logger.info("Baseline response successfully loaded.");
+            logger.info("Baseline response successfully loaded");
             return data;
         } catch (IOException e) {
             logger.error("Failed to load baseline response", e);
@@ -257,7 +257,7 @@ public class Pyke {
         logger.info("Stopping Pyke...");
         portWatcherStarted.set(false);
         scheduler.shutdown();
-        logger.info("Pyke stopped.");
+        logger.info("Pyke stopped");
     }
 
     private void processEvents(AllGameData currentResponse, AllGameData incomingResponse) {
