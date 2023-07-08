@@ -57,7 +57,7 @@ public class LaneOpponentKill {
             }
         });
 
-        pyke.start(); // starts the port watching and subsequent polling
+        pyke.start(); // starts the port watching and subsequent polling of the /liveclientdata endpoint
     }
 }
 ```
