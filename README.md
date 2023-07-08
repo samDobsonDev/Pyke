@@ -26,6 +26,8 @@ public class LaneOpponentKill {
         Pyke pyke = new Pyke();
 
         pyke.registerAnnouncerNotificationEventListener(new AnnouncerNotificationEventListener() {
+
+            // This method will trigger when any kill happens in the game
             @Override
             public void onChampionKill(ChampionKillEvent event) {
 
