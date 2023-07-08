@@ -141,14 +141,14 @@ public class TotalItemValue {
                 // For each player on the ORDER team, calculate the total cost of their items and add it to the totalOrderCost
                 for (Player player : orderPlayers) {
                     totalOrderCost += player.getItems().stream()
-                            .mapToInt(item -> getItemGold(item.getItemID()))
+                            .mapToInt(item -> Math.toIntExact(getItemGold(item.getItemID()) * item.getCount()))
                             .sum();
                 }
 
                 // For each player on the CHAOS team, calculate the total cost of their items and add it to the totalChaosCost
                 for (Player player : chaosPlayers) {
                     totalChaosCost += player.getItems().stream()
-                            .mapToInt(item -> getItemGold(item.getItemID()))
+                            .mapToInt(item -> Math.toIntExact(getItemGold(item.getItemID()) * item.getCount()))
                             .sum();
                 }
 
