@@ -5,7 +5,7 @@ Pyke is a Java library for native desktop applications designed to "hook" and pr
 
 ## What is Pyke?
 
-Pyke utilizes the locally hosted `/liveclientdata` API endpoint that is available when a player is in a League of Legends match. By polling this endpoint at regular intervals, Pyke detects changes in the responses and triggers any corresponding events. This allows for the development of applications that react to real-time information as it happens in-game.
+Pyke utilizes the locally hosted `/liveclientdata` API endpoint that is available when a player is in a League of Legends match. By polling this endpoint at regular intervals, Pyke detects changes in the responses and triggers corresponding events based on those changes. This allows for the development of applications that react to real-time information as it happens in-game.
 
 This API requires an active game client to be open.
 
