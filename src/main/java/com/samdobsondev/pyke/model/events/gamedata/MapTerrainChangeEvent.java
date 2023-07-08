@@ -6,13 +6,15 @@ public class MapTerrainChangeEvent implements GameDataEvent {
     private final GameDataEventType gameDataEventType;
     private final Double gameDataEventTime;
     private final AllGameData allGameData;
-    private final String mapTerrain;
+    private final String oldMapTerrain;
+    private final String newMapTerrain;
 
-    public MapTerrainChangeEvent(GameDataEventType gamedataEventType, Double eventDataTime, AllGameData allGameData, String mapTerrain) {
+    public MapTerrainChangeEvent(GameDataEventType gamedataEventType, Double eventDataTime, AllGameData allGameData, String oldMapTerrain, String newMapTerrain) {
         this.gameDataEventType = gamedataEventType;
         this.gameDataEventTime = eventDataTime;
         this.allGameData = allGameData;
-        this.mapTerrain = mapTerrain;
+        this.oldMapTerrain = oldMapTerrain;
+        this.newMapTerrain = newMapTerrain;
     }
 
     @Override
@@ -30,7 +32,11 @@ public class MapTerrainChangeEvent implements GameDataEvent {
         return this.allGameData;
     }
 
-    public String getMapTerrain() {
-        return this.mapTerrain;
+    public String getOldMapTerrain() {
+        return this.oldMapTerrain;
+    }
+
+    public String getNewMapTerrain() {
+        return this.newMapTerrain;
     }
 }

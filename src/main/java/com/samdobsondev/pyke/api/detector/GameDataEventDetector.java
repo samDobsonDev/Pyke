@@ -36,7 +36,7 @@ public class GameDataEventDetector {
 
         // Check for map terrain
         if (!current.getMapTerrain().equals(incoming.getMapTerrain())) {
-            events.add(new MapTerrainChangeEvent(GameDataEventType.MAP_TERRAIN_CHANGE, eventTime, incomingAllGameData, incoming.getMapTerrain()));
+            events.add(new MapTerrainChangeEvent(GameDataEventType.MAP_TERRAIN_CHANGE, eventTime, incomingAllGameData, current.getMapTerrain(), incoming.getMapTerrain()));
         }
 
         return events;

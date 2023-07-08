@@ -1,97 +1,133 @@
 package com.samdobsondev.pyke.example;
 
 import com.samdobsondev.pyke.api.Pyke;
-import com.samdobsondev.pyke.api.listener.ActivePlayerEventListener;
 import com.samdobsondev.pyke.api.listener.AllPlayersEventListener;
 import com.samdobsondev.pyke.api.listener.AnnouncerNotificationEventListener;
 import com.samdobsondev.pyke.api.listener.GameDataEventListener;
-import com.samdobsondev.pyke.model.events.activeplayer.AbilityLevelUpEvent;
-import com.samdobsondev.pyke.model.events.activeplayer.ActivePlayerLevelUpEvent;
-import com.samdobsondev.pyke.model.events.activeplayer.PassiveEvent;
-import com.samdobsondev.pyke.model.events.allplayers.*;
-import com.samdobsondev.pyke.model.events.announcer.FirstBloodEvent;
-import com.samdobsondev.pyke.model.events.announcer.GameEndEvent;
-import com.samdobsondev.pyke.model.events.announcer.MinionsSpawningEvent;
+import com.samdobsondev.pyke.model.data.allplayers.Player;
+import com.samdobsondev.pyke.model.events.allplayers.CreepScoreChangeEvent;
+import com.samdobsondev.pyke.model.events.allplayers.ItemAcquiredEvent;
+import com.samdobsondev.pyke.model.events.announcer.ChampionKillEvent;
 import com.samdobsondev.pyke.model.events.gamedata.MapTerrainChangeEvent;
+import no.stelar7.api.r4j.basic.APICredentials;
+import no.stelar7.api.r4j.impl.R4J;
+import no.stelar7.api.r4j.impl.lol.raw.DDragonAPI;
+
+import java.util.List;
+import java.util.Optional;
 
 public class Example {
+
+    static APICredentials apiCredentials = new APICredentials("some-api-key");
+    static R4J r4j = new R4J(apiCredentials);
+    static DDragonAPI dDragonAPI = r4j.getDDragonAPI();
+
     public static void main(String[] args) {
 
         Pyke pyke = new Pyke();
 
-        pyke.registerActivePlayerEventListener(new ActivePlayerEventListener() {
-            @Override
-            public void onLevelUp(ActivePlayerLevelUpEvent event) {
-                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " leveled up to level " + event.getLevel());
-
-                if (event.getLevel() >= 16) {
-                    pyke.stop(); // stops the polling and port watching
-                }
-            }
-
-            @Override
-            public void onAbilityLevelUp(AbilityLevelUpEvent event) {
-                System.out.println(event.getAbility() + " is level " + event.getAbilityLevel());
-            }
-
-            @Override
-            public void onPassive(PassiveEvent event) {
-                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + "'s passive is " + event.getPassive().getDisplayName());
-            }
-        });
-
         pyke.registerAllPlayersEventListener(new AllPlayersEventListener() {
+
+            // This method will trigger when any player's CS in the game increase by a factor of 10
             @Override
-            public void onEyeOfHeraldUsedOrLost(EyeOfHeraldUsedOrLostEvent event) {
-                System.out.println(event.getChampionName() + " used or lost the Herald!");
+            public void onCreepScoreChange(CreepScoreChangeEvent event) {
+
+                // Get the current game time in minutes
+                Double currentGameTime = event.getAllPlayersEventTime() / 60;
+
+                // Calculate the CS per minute
+                double csMin = event.getCreepScore() / currentGameTime;
+
+                System.out.println(event.getChampionName() + " is achieving " + csMin + " CS per minute!");
             }
 
+            // This method will get called when anybody in the game buys an item
             @Override
             public void onItemAcquired(ItemAcquiredEvent event) {
-                System.out.println(event.getChampionName() + " acquired " + event.getAcquiredItem().getDisplayName());
-            }
 
-            @Override
-            public void onItemSlotChange(ItemSlotChangeEvent event) {
-                System.out.println(event.getChampionName() + " moved the item: " + event.getItem().getDisplayName() + " from slot " + event.getOldSlot() + " to slot " + event.getNewSlot());
-            }
+                // We create two lists of Player objects, one for each team
+                List<Player> orderPlayers = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> "ORDER".equals(player.getTeam()))
+                        .toList();
 
-            @Override
-            public void onItemSoldOrConsumed(ItemSoldOrConsumedEvent event) {
-                System.out.println(event.getChampionName() + " sold or consumed the item: " + event.getSoldOrConsumedItem().getDisplayName());
-            }
+                List<Player> chaosPlayers = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> "CHAOS".equals(player.getTeam()))
+                        .toList();
 
-            @Override
-            public void onItemTransformation(ItemTransformationEvent event) {
-                System.out.println(event.getChampionName() + "'s " + event.getOldItem().getDisplayName() + " transformed into a " + event.getNewItem().getDisplayName() + "!");
+                // We create two variable to track the total cost of every item on each team
+                int totalOrderCost = 0;
+                int totalChaosCost = 0;
+
+                // For each player on the ORDER team, calculate the total cost of their items and add it to the totalOrderCost
+                for (Player player : orderPlayers) {
+                    totalOrderCost += player.getItems().stream()
+                            .mapToInt(item -> getItemGold(item.getItemID()))
+                            .sum();
+                }
+
+                // For each player on the CHAOS team, calculate the total cost of their items and add it to the totalChaosCost
+                for (Player player : chaosPlayers) {
+                    totalChaosCost += player.getItems().stream()
+                            .mapToInt(item -> getItemGold(item.getItemID()))
+                            .sum();
+                }
+
+                System.out.println(totalOrderCost);
+                System.out.println(totalChaosCost);
             }
         });
 
         pyke.registerAnnouncerNotificationEventListener(new AnnouncerNotificationEventListener() {
-            @Override
-            public void onMinionsSpawning(MinionsSpawningEvent event) {
-                System.out.println("Minions Spawning!");
-            }
 
+            // This method will trigger when any kill happens in the game
             @Override
-            public void onFirstBlood(FirstBloodEvent event) {
-                System.out.println(event.getRecipient() + " got first blood!");
-            }
+            public void onChampionKill(ChampionKillEvent event) {
 
-            @Override
-            public void onGameEnd(GameEndEvent event) {
-                pyke.stop();
+                // Grab the active player summoner name
+                String activePlayerSummonerName = event.getAllGameData().getActivePlayer().getSummonerName();
+
+                // Use the activePlayerSummonerName to retrieve the position of the active player (MID, TOP, etc..)
+                String activePlayerPosition = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> player.getSummonerName().equals(activePlayerSummonerName))
+                        .map(Player::getPosition)
+                        .findFirst()
+                        .orElse(null);
+
+                // Find the player on the opposing team of the same position as the active player (lane opponent)
+                Optional<Player> enemyMidlanerOptional = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> player.getPosition().equals(activePlayerPosition) && player.getTeam().equals("CHAOS"))
+                        .findAny();
+
+                while (enemyMidlanerOptional.isPresent()) {
+                    Player enemyMidlaner = enemyMidlanerOptional.get();
+
+                    // If the ChampionKillEvent killer is the active player, and the victim is the lane opponent...
+                    if ((event.getKillerName().equals(event.getAllGameData().getActivePlayer().getSummonerName())) && event.getVictimName().equals(enemyMidlaner.getSummonerName())) {
+                        System.out.println(activePlayerSummonerName + " killed their lane opponent!");
+                    }
+                }
             }
         });
 
         pyke.registerGameDataEventListener(new GameDataEventListener() {
+
+            // This method will trigger when the map terrain changes (Mountain, Chemtech, Infernal, etc...)
             @Override
             public void onMapTerrainChange(MapTerrainChangeEvent event) {
-                System.out.println("Map Terrain has changed to: " + event.getMapTerrain());
+                System.out.println("The map terrain has changed from " + event.getOldMapTerrain() + " to " + event.getNewMapTerrain());
             }
         });
 
-        pyke.start(); // starts the port watching and subsequent polling
+        pyke.start(); // starts the port watching and subsequent polling of the /liveclientdata endpoint
     }
+
+    // Accepts an itemId and returns the total gold value of that item
+    private static int getItemGold(Long itemId) {
+        Optional<no.stelar7.api.r4j.pojo.lol.staticdata.item.Item> optionalItem = dDragonAPI.getItems().values().stream()
+                .filter(item -> itemId.equals((long) item.getId()))
+                .findFirst();
+        return optionalItem.map(item -> item.getGold().getTotal()).orElse(0);
+    }
+
 }
 
