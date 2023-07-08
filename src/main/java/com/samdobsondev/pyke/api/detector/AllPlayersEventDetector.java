@@ -201,8 +201,8 @@ public class AllPlayersEventDetector
     }
 
     private Map<Long, Long> getItemsCountMap(List<Item> items) {
-        // We use the stream API to group items by their ID and count occurrences
-        return items.stream().collect(Collectors.groupingBy(Item::getItemID, Collectors.counting()));
+        // We use the stream API to group items by their ID and sum their counts
+        return items.stream().collect(Collectors.groupingBy(Item::getItemID, Collectors.summingLong(Item::getCount)));
     }
 
     private void detectSlotChanges(List<AllPlayersEvent> events, Player incomingPlayer, AllGameData incomingAllGameData, Double eventTime, List<Item> currentItems, List<Item> incomingItems) {
