@@ -7,15 +7,14 @@ Pyke is a Java library for native desktop applications designed to "hook" and pr
 
 Pyke utilizes the locally hosted `https://127.0.0.1:2999/liveclientdata/` API endpoint that is available when a player is in a League of Legends match. By polling this endpoint at regular intervals, Pyke detects changes in the responses and triggers corresponding events based on those changes. This allows for the development of applications that react to real-time information as it happens in-game.
 
-This library requires an active game client to be open.
-
 ## What sort of events can I receive using Pyke?
 
 Check out the [listener classes](https://github.com/samDobsonDev/Pyke/tree/master/src/main/java/com/samdobsondev/pyke/api/listener) to get an idea of the type of events Pyke can generate.
 
 ## Requirements
 
-Java 17 and above.
+- Java 17 and above
+- Active game client to be open
 
 ## Examples
 
