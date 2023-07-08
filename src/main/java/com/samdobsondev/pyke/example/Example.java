@@ -7,7 +7,6 @@ import com.samdobsondev.pyke.api.listener.GameDataEventListener;
 import com.samdobsondev.pyke.model.data.allplayers.Player;
 import com.samdobsondev.pyke.model.events.allplayers.CreepScoreChangeEvent;
 import com.samdobsondev.pyke.model.events.allplayers.ItemAcquiredEvent;
-import com.samdobsondev.pyke.model.events.allplayers.ItemSoldOrConsumedEvent;
 import com.samdobsondev.pyke.model.events.announcer.ChampionKillEvent;
 import com.samdobsondev.pyke.model.events.gamedata.MapTerrainChangeEvent;
 import no.stelar7.api.r4j.basic.APICredentials;
