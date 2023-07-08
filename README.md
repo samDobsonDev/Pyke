@@ -18,80 +18,38 @@ Java 17 and above.
 ## Examples
 
 ```java
-public class Example {
+public class LaneOpponentKill {
     public static void main(String[] args) {
 
         Pyke pyke = new Pyke();
 
-        pyke.registerActivePlayerEventListener(new ActivePlayerEventListener() {
-            @Override
-            public void onLevelUp(ActivePlayerLevelUpEvent event) {
-                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + " leveled up to level " + event.getLevel());
-
-                if (event.getLevel() >= 16) {
-                    pyke.stop(); // stops the polling and port watching
-                }
-            }
-
-            @Override
-            public void onAbilityLevelUp(AbilityLevelUpEvent event) {
-                System.out.println(event.getAbility() + " is level " + event.getAbilityLevel());
-            }
-
-            @Override
-            public void onPassive(PassiveEvent event) {
-                System.out.println(event.getAllGameData().getActivePlayer().getSummonerName() + "'s passive is " + event.getPassive().getDisplayName());
-            }
-        });
-
-        pyke.registerAllPlayersEventListener(new AllPlayersEventListener() {
-            @Override
-            public void onEyeOfHeraldUsedOrLost(EyeOfHeraldUsedOrLostEvent event) {
-                System.out.println(event.getChampionName() + " used or lost the Herald!");
-            }
-
-            @Override
-            public void onItemAcquired(ItemAcquiredEvent event) {
-                System.out.println(event.getChampionName() + " acquired " + event.getAcquiredItem().getDisplayName());
-            }
-
-            @Override
-            public void onItemSlotChange(ItemSlotChangeEvent event) {
-                System.out.println(event.getChampionName() + " moved the item: " + event.getItem().getDisplayName() + " from slot " + event.getOldSlot() + " to slot " + event.getNewSlot());
-            }
-
-            @Override
-            public void onItemSoldOrConsumed(ItemSoldOrConsumedEvent event) {
-                System.out.println(event.getChampionName() + " sold or consumed the item: " + event.getSoldOrConsumedItem().getDisplayName());
-            }
-
-            @Override
-            public void onItemTransformation(ItemTransformationEvent event) {
-                System.out.println(event.getChampionName() + "'s " + event.getOldItem().getDisplayName() + " transformed into a " + event.getNewItem().getDisplayName() + "!");
-            }
-        });
-
         pyke.registerAnnouncerNotificationEventListener(new AnnouncerNotificationEventListener() {
             @Override
-            public void onMinionsSpawning(MinionsSpawningEvent event) {
-                System.out.println("Minions Spawning!");
-            }
+            public void onChampionKill(ChampionKillEvent event) {
 
-            @Override
-            public void onFirstBlood(FirstBloodEvent event) {
-                System.out.println(event.getRecipient() + " got first blood!");
-            }
+                // Grab the active player summoner name
+                String activePlayerSummonerName = event.getAllGameData().getActivePlayer().getSummonerName();
 
-            @Override
-            public void onGameEnd(GameEndEvent event) {
-                pyke.stop();
-            }
-        });
+                // Use the activePlayerSummonerName to retrieve the position of the active player (MID, TOP, etc..)
+                String activePlayerPosition = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> player.getSummonerName().equals(activePlayerSummonerName))
+                        .map(Player::getPosition)
+                        .findFirst()
+                        .orElse(null);
 
-        pyke.registerGameDataEventListener(new GameDataEventListener() {
-            @Override
-            public void onMapTerrainChange(MapTerrainChangeEvent event) {
-                System.out.println("Map Terrain has changed to: " + event.getMapTerrain());
+                // Find the player on the opposing team of the same position as the active player (lane opponent)
+                Optional<Player> enemyMidlanerOptional = event.getAllGameData().getAllPlayers().stream()
+                        .filter(player -> player.getPosition().equals(activePlayerPosition) && player.getTeam().equals("CHAOS"))
+                        .findAny();
+                
+                while (enemyMidlanerOptional.isPresent()) {
+                    Player enemyMidlaner = enemyMidlanerOptional.get();
+
+                    // If the ChampionKillEvent killer is the active player, and the victim is the lane opponent...
+                    if ((event.getKillerName().equals(event.getAllGameData().getActivePlayer().getSummonerName())) && event.getVictimName().equals(enemyMidlaner.getSummonerName())) {
+                        System.out.println(activePlayerSummonerName + " killed their lane opponent!");
+                    }
+                }
             }
         });
 
