@@ -109,6 +109,10 @@ public class MapTerrainChange {
 ```
 
 ```java
+import no.stelar7.api.r4j.basic.APICredentials;
+import no.stelar7.api.r4j.impl.R4J;
+import no.stelar7.api.r4j.impl.lol.raw.DDragonAPI;
+
 public class TotalItemValue {
 
     static APICredentials apiCredentials = new APICredentials("some-api-key");
