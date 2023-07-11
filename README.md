@@ -1,5 +1,5 @@
 # Pyke
-[![](https://jitpack.io/v/samDobsonDev/Pyke.svg)](https://jitpack.io/#samDobsonDev/Pyke)
+[![](https://jitpack.io/v/samDobsonDev/Pyke.svg)]([https://jitpack.io/#samDobsonDev/Pyke](https://jitpack.io/#samDobsonDev/Pyke/1.0.0))
 
 Pyke is a Java library for native desktop applications designed to "hook" and process real-time game events from League of Legends matches!
 
